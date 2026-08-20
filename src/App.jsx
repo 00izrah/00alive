@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { FastAverageColor } from 'fast-average-color';
 import { EKG } from './components/EKG';
 import { StatusBadge } from './components/StatusBadge';
@@ -7,6 +7,11 @@ import { RecentTracks } from './components/RecentTracks';
 import { PingModal } from './components/PingModal';
 import { ArtistLoyalty } from './components/ArtistLoyalty';
 import { VibeCheck } from './components/VibeCheck';
+import { StreakCounter } from './components/StreakCounter';
+import { AudioSignature } from './components/AudioSignature';
+import { HistoricalCalendar } from './components/HistoricalCalendar';
+
+const fac = new FastAverageColor();
 
 export default function App() {
   const [statusData, setStatusData] = useState(null);
@@ -36,9 +41,8 @@ export default function App() {
   }, [statusData]);
 
   // ── Colour extraction from album art ─────────────────────────────────────
-  function applyAlbumColor(albumArt, energy, valence) {
+  const applyAlbumColor = useCallback((albumArt, energy, valence) => {
     if (!albumArt) return;
-    const fac = new FastAverageColor();
     fac.getColorAsync(albumArt)
       .then(color => {
         setEkgColor(color.rgba);
@@ -55,10 +59,10 @@ export default function App() {
         }
       })
       .catch(() => {}); // Silently ignore CORS failures on album art
-  }
+  }, []);
 
   // ── Fetch witty comment ───────────────────────────────────────────────────
-  async function fetchComment(track, tier, energy, valence) {
+  const fetchComment = useCallback(async (track, tier, energy, valence) => {
     setCommentLoading(true);
     try {
       const res = await fetch('/api/comment', {
@@ -80,49 +84,50 @@ export default function App() {
     } finally {
       setCommentLoading(false);
     }
-  }
+  }, []);
+
+  // ── Background sync trigger ──────────────────────────────────────────────
+  const triggerSync = useCallback(async () => {
+    try {
+      await fetch('/api/trigger-sync', { method: 'POST' });
+    } catch {
+      // Silently fail
+    }
+  }, []);
 
   // ── Fetch status ─────────────────────────────────────────────────────────
-async function fetchStatus() {
-  try {
-    const res = await fetch('/api/status');
-    const data = await res.json();
-    setStatusData(data);
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      setStatusData(data);
 
-    // If snapshot is older than 4 minutes, trigger a background sync
-    if (data.snapshotAge) {
-      const ageMinutes = (Date.now() - new Date(data.snapshotAge)) / 60000;
-      if (ageMinutes > 4) {
-        triggerSync();
+      // If snapshot is older than 4 minutes, trigger a background sync
+      if (data?.snapshotAge) {
+        const ageMinutes = (Date.now() - new Date(data.snapshotAge).getTime()) / 60000;
+        if (ageMinutes > 4) {
+          triggerSync();
+        }
       }
-    }
 
-    if (data.track) {
-      if (data.track.id !== lastTrackIdRef.current) {
-        lastTrackIdRef.current = data.track.id;
-        applyAlbumColor(data.track.albumArt, data.energy, data.valence);
-        fetchComment(data.track, data.tier, data.energy, data.valence);
+      if (data?.track) {
+        if (data.track.id !== lastTrackIdRef.current) {
+          lastTrackIdRef.current = data.track.id;
+          applyAlbumColor(data.track.albumArt, data.energy, data.valence);
+          fetchComment(data.track, data.tier, data.energy, data.valence);
+        }
+      } else {
+        setCommentLoading(false);
       }
-    } else {
-      setCommentLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch status:', err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Failed to fetch status:', err);
-  } finally {
-    setLoading(false);
-  }
-}
-
-async function triggerSync() {
-  try {
-    await fetch('/api/trigger-sync', { method: 'POST' });
-  } catch {
-    // Silently fail
-  }
-}
+  }, [applyAlbumColor, fetchComment, triggerSync]);
 
   // ── Visitor tracking ─────────────────────────────────────────────────────
-  async function trackVisitor() {
+  const trackVisitor = useCallback(async () => {
     try {
       const res = await fetch('/api/visit');
       if (res.ok) {
@@ -132,13 +137,23 @@ async function triggerSync() {
     } catch {
       // Silently fail — non-critical
     }
-  }
+  }, []);
 
   // ── Polling setup ─────────────────────────────────────────────────────────
   useEffect(() => {
+    let isMounted = true;
+
+    async function initialize() {
+      await fetchStatus();
+      if (isMounted) {
+        trackVisitor();
+      }
+    }
+
+    initialize();
+
     const startPolling = () => {
       if (!intervalRef.current) {
-        // Poll every 3 minutes — syncs with the GitHub Actions sync interval
         intervalRef.current = setInterval(fetchStatus, 180000);
       }
     };
@@ -152,30 +167,23 @@ async function triggerSync() {
 
     const handleVisibility = () => {
       if (document.hidden) {
-        // Tab went to background — stop polling entirely, zero wasted calls
         stopPolling();
       } else {
-        // Tab came back — fetch immediately so data feels fresh, then resume
         fetchStatus();
         startPolling();
       }
     };
 
-    // Initial load
-    fetchStatus();
-    trackVisitor();
-
-    // Start polling if tab is already visible
     if (!document.hidden) startPolling();
 
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
+      isMounted = false;
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchStatus, trackVisitor]);
 
   // ── Derived values ────────────────────────────────────────────────────────
   const tierColor = statusData?.color || 'alive';
@@ -234,13 +242,9 @@ async function triggerSync() {
               onClick={() => setIsPingModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-alive/30 bg-alive/5 text-alive text-[10px] font-mono tracking-widest uppercase transition-colors hover:bg-alive/10 hover:border-alive/50 cursor-pointer"
             >
-          <svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier"> 
-              <path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 5.46436 12 6.42958Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> 
-            </g>
-          </svg>
+              <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 5.46436 12 6.42958Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               Check On Him
             </button>
           </div>
@@ -269,7 +273,7 @@ async function triggerSync() {
         </div>
 
         {/* Track card */}
-        <div className="mb-6">
+        <div className="mb-10">
           <TrackCard
             track={statusData?.track}
             isLoading={loading}
@@ -277,17 +281,38 @@ async function triggerSync() {
           />
         </div>
 
-        {/* Vibe check */}
-        <div className="mb-7">
-          <VibeCheck
-            track={statusData?.track}
-            comment={comment || statusData?.message}
-            commentLoading={commentLoading}
+        {/* ─── ACTIVITY & CONSISTENCY ─────────────────────────────────── */}
+
+        {/* Streak + Vibe side-by-side */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 min-w-0">
+            <StreakCounter
+              streak={statusData?.streak}
+              isLoading={loading}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <VibeCheck />
+          </div>
+        </div>
+
+        {/* Historical 30-Day Activity Calendar */}
+        <div className="mb-10">
+          <HistoricalCalendar
+            calendar={statusData?.calendar}
+            isLoading={loading}
           />
         </div>
 
+        {/* ─── DEEP DIVE ─────────────────────────────────────────────── */}
+        <div className="mb-6 pt-2 border-t border-border/30">
+          <p className="text-muted text-[10px] font-mono uppercase tracking-widest mt-4">
+            — Deep Dive
+          </p>
+        </div>
+
         {/* Artist loyalty */}
-        <div className="mb-10">
+        <div className="mb-8">
           <ArtistLoyalty
             topArtists={statusData?.loyalty}
             isLoading={loading}
@@ -295,17 +320,26 @@ async function triggerSync() {
         </div>
 
         {/* Recent tracks */}
-        <div className="mb-4">
+        <div className="mb-8">
           <RecentTracks
             tracks={statusData?.recentTracks}
             isLoading={loading}
           />
         </div>
 
-        {/* Footer — visitor count + raw API link for the curious
+        {/* Audio Signature Radar — secondary insight */}
+        <div className="mb-8">
+          <AudioSignature
+            energy={statusData?.energy || 0.5}
+            valence={statusData?.valence || 0.5}
+            isPlaying={Boolean(statusData?.track?.isPlaying)}
+          />
+        </div>
+
+        {/* Footer — visitor count + raw API link */}
         <div className="mt-4 pt-6 border-t border-border/30 flex items-center justify-between">
           <p className="text-muted text-[10px] font-mono">
-            {visitorCount !== '...' ? `${visitorCount} visits today` : ''}
+            {visitorCount !== '...' ? `${visitorCount} visits today` : 'reading signals...'}
           </p>
           <a
             href="/api/status"
@@ -315,7 +349,7 @@ async function triggerSync() {
           >
             /api/status →
           </a>
-        </div> */}
+        </div>
 
       </div>
 
@@ -323,4 +357,3 @@ async function triggerSync() {
     </div>
   );
 }
-

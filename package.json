@@ -10,12 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.106.0",
     "fast-average-color": "^9.5.2",
     "groq-sdk": "^1.2.0",
     "react": "^19.2.6",
-    "react-activity-calendar": "^3.2.0",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {

@@ -1,58 +1,58 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-export function HistoricalCalendar() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Generate exactly 30 days
-    const generateData = () => {
-      const result = [];
-      const today = new Date();
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        
-        const rand = Math.random();
-        let level = 0;
-        if (rand > 0.3) {
-            level = Math.floor(Math.random() * 4) + 1; // 1 to 4
+export function HistoricalCalendar({ calendar = [], isLoading = false }) {
+  const days = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(calendar)) {
+      calendar.forEach(item => {
+        if (item?.date) {
+          map.set(item.date, item.count ?? 0);
         }
-        
-        result.push({
-          date: date.toISOString().split('T')[0],
-          day: date.getDate(),
-          level: level,
-        });
-      }
-      return result;
-    };
-    
-    setData(generateData());
-    setLoading(false);
-  }, []);
+      });
+    }
 
-  if (loading) {
+    const result = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const count = map.get(dateStr) ?? 0;
+
+      let level = 0;
+      if (count >= 20) level = 4;
+      else if (count >= 10) level = 3;
+      else if (count >= 3) level = 2;
+      else if (count > 0) level = 1;
+
+      result.push({
+        date: dateStr,
+        day: d.getDate(),
+        count,
+        level,
+      });
+    }
+    return result;
+  }, [calendar]);
+
+  if (isLoading) {
     return (
-      <div className="bg-surface/50 border border-border/50 rounded-xl p-6 h-32 animate-pulse"></div>
+      <div className="bg-surface/30 border border-border/50 rounded-xl p-6 h-32 animate-pulse mb-8" />
     );
   }
 
-  // Helper map to color blocks based on level
   const getColor = (level) => {
     switch(level) {
-      case 4: return 'bg-alive shadow-[0_0_8px_rgba(74,222,128,0.5)]';
+      case 4: return 'bg-alive shadow-[0_0_8px_rgba(200,255,0,0.5)]';
       case 3: return 'bg-alive/80';
       case 2: return 'bg-alive/60';
       case 1: return 'bg-alive/30';
-      default: return 'bg-surface-light/50 border border-border/50';
+      default: return 'bg-surface/50 border border-border/50';
     }
   };
 
   return (
-    <div className="bg-surface/30 border border-border/50 rounded-xl p-6 relative overflow-hidden group hover:border-alive/30 transition-colors">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-text/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      
+    <div className="bg-surface/30 border border-border/50 rounded-xl p-6 mb-8 relative overflow-hidden group hover:border-alive/30 transition-colors">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xs font-mono font-bold text-text uppercase tracking-widest flex items-center gap-2">
           <svg className="w-4 h-4 text-text/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,14 +66,14 @@ export function HistoricalCalendar() {
       </div>
 
       <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-start">
-        {data.map((day, i) => (
+        {days.map((day, i) => (
           <div 
             key={i} 
             className={`w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] rounded ${getColor(day.level)} transition-colors duration-300 hover:ring-1 hover:ring-text/50 relative group/block`}
           >
             {/* Tooltip */}
             <div className="absolute opacity-0 group-hover/block:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black/90 border border-white/10 text-[10px] text-white px-2 py-1 rounded pointer-events-none whitespace-nowrap z-10 transition-opacity">
-              {day.date}
+              {day.date}: {day.count} track{day.count === 1 ? '' : 's'}
             </div>
           </div>
         ))}

@@ -28,14 +28,14 @@ export function PingModal({ isOpen, onClose }) {
 				setName("");
 				setMessage("");
 			}, 2000);
-		} catch (err) {
+		} catch {
 			setStatus("error");
 			setTimeout(() => setStatus("idle"), 3000);
 		}
 	};
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 backdrop-blur-sm p-4">
 			<div className="w-full max-w-sm bg-surface border border-border/50 rounded-xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
 				<button
 					onClick={onClose}
@@ -99,7 +99,7 @@ export function PingModal({ isOpen, onClose }) {
 								onChange={(e) => setName(e.target.value)}
 								required
 								disabled={status === "loading"}
-								className="w-full bg-background border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors disabled:opacity-50"
+								className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors disabled:opacity-50"
 								placeholder="such a darling🙈"
 							/>
 						</div>
@@ -113,7 +113,7 @@ export function PingModal({ isOpen, onClose }) {
 								value={message}
 								onChange={(e) => setMessage(e.target.value)}
 								disabled={status === "loading"}
-								className="w-full bg-background border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors h-24 resize-none disabled:opacity-50"
+								className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors h-24 resize-none disabled:opacity-50"
 								placeholder="izrah youre so sexy i love you and i want to be like you..."
 							/>
 						</div>
@@ -121,7 +121,7 @@ export function PingModal({ isOpen, onClose }) {
 						<button
 							type="submit"
 							disabled={status === "loading" || !name.trim()}
-							className="w-full mt-2 color:white bg-text text-background hover:bg-alive hover:text-black font-mono font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden flex items-center justify-center"
+							className="w-full mt-2 bg-text text-void hover:bg-alive hover:text-void font-mono font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden flex items-center justify-center"
 						>
 							{status === "loading" ? (
 								<span className="flex items-center gap-2">

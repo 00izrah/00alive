@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 function timeAgo(isoString) {
-	const diff = Date.now() - new Date(isoString);
+	const diff = Date.now() - new Date(isoString).getTime();
 	const mins = Math.floor(diff / 60000);
 	const hrs = Math.floor(mins / 60);
 
@@ -11,18 +11,16 @@ function timeAgo(isoString) {
 	return `${Math.floor(hrs / 24)}d ${hrs % 24}h ago`;
 }
 
+const SOUNDBAR_HEIGHTS = ['60%', '100%', '80%'];
+
 export function TrackCard({ track, isLoading, ekgColor }) {
-	const [activeTimeAgo, setActiveTimeAgo] = useState("");
+	const [, setTick] = useState(0);
 
 	useEffect(() => {
 		if (!track || track.isPlaying) return;
 		
-		// Initial set
-		setActiveTimeAgo(timeAgo(track.playedAt));
-		
-		// Update every minute (60000 ms)
 		const interval = setInterval(() => {
-			setActiveTimeAgo(timeAgo(track.playedAt));
+			setTick(t => t + 1);
 		}, 60000);
 		
 		return () => clearInterval(interval);
@@ -44,8 +42,15 @@ export function TrackCard({ track, isLoading, ekgColor }) {
 
 	if (!track) return null;
 
+	const activeTimeAgo = track && !track.isPlaying && track.playedAt ? timeAgo(track.playedAt) : "";
+
 	return (
-		<a href={track?.url || '#'} target="_blank" rel="noopener noreferrer" className="block relative group bg-surface/30 border border-border/60 hover:border-border backdrop-blur-sm rounded-[1.25rem] p-5 overflow-hidden transition-all duration-500">
+		<a
+			href={track?.url || '#'}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="block relative group bg-surface/30 border border-border/60 hover:border-border backdrop-blur-sm rounded-[1.25rem] p-5 overflow-hidden transition-all duration-500"
+		>
 			{/* subtle hover glow on the card */}
 			{track.isPlaying && (
 				<div className="absolute inset-0 bg-gradient-to-tr from-alive/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -57,11 +62,15 @@ export function TrackCard({ track, isLoading, ekgColor }) {
 				</p>
 				{track.isPlaying && (
 					<div className="flex gap-[3px] h-3 items-end">
-						{[1, 2, 3].map((i) => (
+						{[0, 1, 2].map((i) => (
 							<div
 								key={i}
 								className="w-[3px] animate-[pulse_1s_ease-in-out_infinite]"
-								style={{ backgroundColor: ekgColor || 'rgb(var(--color-alive))', height: `${Math.random() * 100 + 40}%`, animationDelay: `${i * 0.15}s` }}
+								style={{
+									backgroundColor: ekgColor || 'rgb(var(--color-alive))',
+									height: SOUNDBAR_HEIGHTS[i],
+									animationDelay: `${i * 0.15}s`,
+								}}
 							/>
 						))}
 					</div>
@@ -82,7 +91,7 @@ export function TrackCard({ track, isLoading, ekgColor }) {
 					</div>
 				)}
 				<div className="min-w-0 flex-1">
-					<p className="text-text font-mono text-[15px] font-bold truncate tracking-tight text-shadow-sm group-hover:text-white transition-colors duration-300">
+					<p className="text-text font-mono text-[15px] font-bold truncate tracking-tight group-hover:text-white transition-colors duration-300">
 						{track.name}
 					</p>
 					<p className="text-muted text-[12px] truncate mt-0.5 group-hover:text-text/80 transition-colors duration-300">
@@ -107,5 +116,6 @@ export function TrackCard({ track, isLoading, ekgColor }) {
 					/>
 				</div>
 			)}
-                </a>        );
+		</a>
+	);
 }

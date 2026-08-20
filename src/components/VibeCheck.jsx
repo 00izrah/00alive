@@ -38,14 +38,14 @@ export function VibeCheck() {
         });
     };
 
-    if (loading) return <div className="h-14 animate-pulse bg-surface/30 rounded-1xl mb-8" />;
+    if (loading) return <div className="h-full animate-pulse bg-surface/30 border border-border rounded-2xl" />;
 
     const total = votes.fire + votes.flag;
     const firePct = total === 0 ? 50 : Math.round((votes.fire / total) * 100);
     const flagPct = total === 0 ? 50 : Math.round((votes.flag / total) * 100);
 
     return (
-        <div className="bg-surface/30 border border-border/50 rounded-2xl p-4 mb-8">
+        <div className="border border-border rounded-2xl p-4 h-full flex flex-col justify-center">
             {!hasVoted ? (
                 <div className="flex gap-3">
                     <button 
