@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { FastAverageColor } from 'fast-average-color';
+import { supabase } from './lib/supabase';
+import { playReactionSound } from './lib/audioSynth';
 import { EKG } from './components/EKG';
 import { StatusBadge } from './components/StatusBadge';
 import { TrackCard } from './components/TrackCard';
 import { RecentTracks } from './components/RecentTracks';
 import { PingModal } from './components/PingModal';
+import { PingToast } from './components/PingToast';
 import { ArtistLoyalty } from './components/ArtistLoyalty';
-import { VibeCheck } from './components/VibeCheck';
-import { StreakCounter } from './components/StreakCounter';
-import { AudioSignature } from './components/AudioSignature';
-import { HistoricalCalendar } from './components/HistoricalCalendar';
+import { SoundBiteReactions } from './components/SoundBiteReactions';
+import { FloatingReactions } from './components/FloatingReactions';
+import { DropASong } from './components/DropASong';
+import { GroovePet } from './components/GroovePet';
 
 const fac = new FastAverageColor();
+
 
 export default function App() {
   const [statusData, setStatusData] = useState(null);
@@ -19,12 +23,20 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [commentLoading, setCommentLoading] = useState(true);
   const [isPingModalOpen, setIsPingModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState('ping');
+  const [latestRecommendation, setLatestRecommendation] = useState(null);
+  const [activePing, setActivePing] = useState(null);
+  const [reactions, setReactions] = useState([]);
   const [visitorCount, setVisitorCount] = useState('...');
   const [ekgColor, setEkgColor] = useState('#c8ff00');
 
+
+
   // Track the last track ID so we only re-fetch comments when the song changes
   const lastTrackIdRef = useRef(null);
-  const intervalRef = useRef(null);
+  const lastSyncTriggerRef = useRef(0);
+
+
 
   // ── Page title ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -62,7 +74,7 @@ export default function App() {
   }, []);
 
   // ── Fetch witty comment ───────────────────────────────────────────────────
-  const fetchComment = useCallback(async (track, tier, energy, valence) => {
+  const fetchComment = useCallback(async (track, tier, energy, valence, bpm) => {
     setCommentLoading(true);
     try {
       const res = await fetch('/api/comment', {
@@ -75,6 +87,7 @@ export default function App() {
           tier,
           energy,
           valence,
+          bpm,
         }),
       });
       const data = await res.json();
@@ -102,10 +115,12 @@ export default function App() {
       const data = await res.json();
       setStatusData(data);
 
-      // If snapshot is older than 4 minutes, trigger a background sync
+      // If snapshot is older than 30 seconds, trigger a background sync (throttled to 30s)
       if (data?.snapshotAge) {
-        const ageMinutes = (Date.now() - new Date(data.snapshotAge).getTime()) / 60000;
-        if (ageMinutes > 4) {
+        const ageSec = (Date.now() - new Date(data.snapshotAge).getTime()) / 1000;
+        const timeSinceLastTrigger = Date.now() - lastSyncTriggerRef.current;
+        if (ageSec > 30 && timeSinceLastTrigger > 30000) {
+          lastSyncTriggerRef.current = Date.now();
           triggerSync();
         }
       }
@@ -114,7 +129,7 @@ export default function App() {
         if (data.track.id !== lastTrackIdRef.current) {
           lastTrackIdRef.current = data.track.id;
           applyAlbumColor(data.track.albumArt, data.energy, data.valence);
-          fetchComment(data.track, data.tier, data.energy, data.valence);
+          fetchComment(data.track, data.tier, data.energy, data.valence, data.bpm);
         }
       } else {
         setCommentLoading(false);
@@ -125,6 +140,7 @@ export default function App() {
       setLoading(false);
     }
   }, [applyAlbumColor, fetchComment, triggerSync]);
+
 
   // ── Visitor tracking ─────────────────────────────────────────────────────
   const trackVisitor = useCallback(async () => {
@@ -139,51 +155,221 @@ export default function App() {
     }
   }, []);
 
-  // ── Polling setup ─────────────────────────────────────────────────────────
+  // ── Floating Sound-Bite Reactions ───────────────────────────────────────
+  const triggerFloatingReaction = useCallback((reactionData, isRemote = false) => {
+    const reactionId = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const newReaction = {
+      id: reactionId,
+      emoji: reactionData.emoji || '🔥',
+      soundType: reactionData.soundType || 'fire',
+      isVoicePing: Boolean(reactionData.isVoicePing),
+      label: reactionData.label || null,
+      x: reactionData.x ?? (20 + Math.random() * 60),
+      driftX: (Math.random() - 0.5) * 80,
+      rot: (Math.random() - 0.5) * 40,
+      timestamp: Date.now(),
+    };
+
+    setReactions((prev) => [...prev.slice(-15), newReaction]);
+    playReactionSound(reactionData.soundType || reactionData.emoji);
+
+    // Broadcast if locally triggered
+    if (!isRemote && supabase) {
+      const channel = supabase.channel('izrah-live');
+      channel.send({
+        type: 'broadcast',
+        event: 'reaction_sent',
+        payload: {
+          emoji: newReaction.emoji,
+          soundType: newReaction.soundType,
+          isVoicePing: newReaction.isVoicePing,
+          label: newReaction.label,
+          x: newReaction.x,
+        },
+      }).catch(() => {});
+    }
+  }, []);
+
+  // ── Realtime Subscriptions & Lifecycle ──────────────────────────────────
   useEffect(() => {
     let isMounted = true;
 
-    async function initialize() {
+    // Initial load
+    const initialize = async () => {
       await fetchStatus();
       if (isMounted) {
         trackVisitor();
       }
-    }
-
+    };
     initialize();
 
-    const startPolling = () => {
-      if (!intervalRef.current) {
-        intervalRef.current = setInterval(fetchStatus, 180000);
-      }
-    };
-
-    const stopPolling = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-
-    const handleVisibility = () => {
-      if (document.hidden) {
-        stopPolling();
-      } else {
+    // Periodic check every 30s when tab is visible
+    const liveInterval = setInterval(() => {
+      if (!document.hidden && isMounted) {
         fetchStatus();
-        startPolling();
+      }
+    }, 30000);
+
+    // Re-verify immediately on tab visibility change
+    const handleVisibility = () => {
+      if (!document.hidden && isMounted) {
+        fetchStatus();
       }
     };
-
-    if (!document.hidden) startPolling();
 
     document.addEventListener('visibilitychange', handleVisibility);
 
+
+    // Supabase Realtime Channel Subscription
+    let channel = null;
+    if (supabase) {
+      channel = supabase.channel('izrah-live')
+        // Database changes on spotify_snapshot
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'spotify_snapshot' },
+          (payload) => {
+            console.log('[Realtime] Spotify snapshot changed:', payload);
+            if (isMounted) fetchStatus();
+          }
+        )
+        // Database changes on comment_cache
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'comment_cache' },
+          (payload) => {
+            console.log('[Realtime] Comment cache changed:', payload);
+            if (isMounted && payload.new?.comments?.length) {
+              const comments = payload.new.comments;
+              const pick = comments[Math.floor(Math.random() * comments.length)];
+              setComment(pick);
+              setCommentLoading(false);
+            }
+          }
+        )
+        // Database changes on pings
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'pings' },
+          (payload) => {
+            console.log('[Realtime] Ping received via DB insert:', payload);
+            if (isMounted && payload.new) {
+              setActivePing({
+                name: payload.new.name,
+                message: payload.new.message,
+                timestamp: payload.new.created_at || new Date().toISOString(),
+              });
+              triggerFloatingReaction({
+                emoji: '🔊',
+                soundType: 'sonar',
+                isVoicePing: true,
+                label: `${payload.new.name} pinged`,
+              }, true);
+            }
+          }
+        )
+        // Database changes on streaks
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'streaks' },
+          () => {
+            if (isMounted) fetchStatus();
+          }
+        )
+        // Database changes on listening_calendar
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'listening_calendar' },
+          () => {
+            if (isMounted) fetchStatus();
+          }
+        )
+        // Realtime Broadcast: status_updated
+        .on(
+          'broadcast',
+          { event: 'status_updated' },
+          (payload) => {
+            console.log('[Realtime Broadcast] Status updated:', payload);
+            if (isMounted) fetchStatus();
+          }
+        )
+        // Realtime Broadcast: comment_updated
+        .on(
+          'broadcast',
+          { event: 'comment_updated' },
+          ({ payload }) => {
+            console.log('[Realtime Broadcast] Comment updated:', payload);
+            if (isMounted && payload?.comment) {
+              setComment(payload.comment);
+              setCommentLoading(false);
+            }
+          }
+        )
+        // Realtime Broadcast: ping_received
+        .on(
+          'broadcast',
+          { event: 'ping_received' },
+          ({ payload }) => {
+            console.log('[Realtime Broadcast] Ping received:', payload);
+            if (isMounted && payload) {
+              setActivePing(payload);
+              triggerFloatingReaction({
+                emoji: '🔊',
+                soundType: 'sonar',
+                isVoicePing: true,
+                label: `${payload.name || 'someone'} pinged`,
+              }, true);
+            }
+          }
+        )
+        // Realtime Broadcast: reaction_sent
+        .on(
+          'broadcast',
+          { event: 'reaction_sent' },
+          ({ payload }) => {
+            console.log('[Realtime Broadcast] Reaction received:', payload);
+            if (isMounted && payload) {
+              triggerFloatingReaction(payload, true);
+            }
+          }
+        )
+        // Realtime Broadcast: recommendation_added
+        .on(
+          'broadcast',
+          { event: 'recommendation_added' },
+          ({ payload }) => {
+            console.log('[Realtime Broadcast] Recommendation received:', payload);
+            if (isMounted && payload) {
+              setLatestRecommendation(payload);
+              triggerFloatingReaction({
+                emoji: '🎵',
+                soundType: 'cyber',
+                isVoicePing: false,
+                label: `${payload.name || 'someone'} dropped a song`,
+              }, true);
+            }
+          }
+        )
+        .subscribe((status) => {
+
+          if (status === 'SUBSCRIBED') {
+            console.log('[Realtime] Subscribed to izrah-live channel');
+          }
+        });
+    }
+
     return () => {
       isMounted = false;
-      stopPolling();
+      clearInterval(liveInterval);
       document.removeEventListener('visibilitychange', handleVisibility);
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [fetchStatus, trackVisitor]);
+
+  }, [fetchStatus, trackVisitor, triggerFloatingReaction]);
+
+
 
   // ── Derived values ────────────────────────────────────────────────────────
   const tierColor = statusData?.color || 'alive';
@@ -237,9 +423,13 @@ export default function App() {
               label={statusData.label}
               color={statusData.color}
               genre={statusData.topGenre}
+              isPlaying={Boolean(statusData?.track?.isPlaying)}
             />
             <button
-              onClick={() => setIsPingModalOpen(true)}
+              onClick={() => {
+                setModalInitialTab('ping');
+                setIsPingModalOpen(true);
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-alive/30 bg-alive/5 text-alive text-[10px] font-mono tracking-widest uppercase transition-colors hover:bg-alive/10 hover:border-alive/50 cursor-pointer"
             >
               <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -281,25 +471,32 @@ export default function App() {
           />
         </div>
 
-        {/* ─── ACTIVITY & CONSISTENCY ─────────────────────────────────── */}
-
-        {/* Streak + Vibe side-by-side */}
-        <div className="flex gap-4 mb-6">
+        {/* ─── COMPANION & REACTIONS ─────────────────────────────── */}
+        <div className="flex gap-4 mb-4">
           <div className="flex-1 min-w-0">
-            <StreakCounter
-              streak={statusData?.streak}
-              isLoading={loading}
+            <GroovePet
+              bpm={statusData?.bpm || 80}
+              isPlaying={Boolean(statusData?.track?.isPlaying)}
+              energy={statusData?.energy || 0.5}
+              ekgColor={activeEkgColor}
             />
           </div>
           <div className="flex-1 min-w-0">
-            <VibeCheck />
+            <SoundBiteReactions
+              onReaction={triggerFloatingReaction}
+              isLoading={loading}
+            />
           </div>
         </div>
 
-        {/* Historical 30-Day Activity Calendar */}
+        {/* ─── COMMUNITY DROPS (Dedicated Full Row) ─────────────────── */}
         <div className="mb-10">
-          <HistoricalCalendar
-            calendar={statusData?.calendar}
+          <DropASong
+            onOpenRecommendModal={() => {
+              setModalInitialTab('recommend');
+              setIsPingModalOpen(true);
+            }}
+            latestRecommendation={latestRecommendation}
             isLoading={loading}
           />
         </div>
@@ -327,16 +524,8 @@ export default function App() {
           />
         </div>
 
-        {/* Audio Signature Radar — secondary insight */}
-        <div className="mb-8">
-          <AudioSignature
-            energy={statusData?.energy || 0.5}
-            valence={statusData?.valence || 0.5}
-            isPlaying={Boolean(statusData?.track?.isPlaying)}
-          />
-        </div>
-
         {/* Footer — visitor count + raw API link */}
+
         <div className="mt-4 pt-6 border-t border-border/30 flex items-center justify-between">
           <p className="text-muted text-[10px] font-mono">
             {visitorCount !== '...' ? `${visitorCount} visits today` : 'reading signals...'}
@@ -353,7 +542,20 @@ export default function App() {
 
       </div>
 
-      <PingModal isOpen={isPingModalOpen} onClose={() => setIsPingModalOpen(false)} />
+      <FloatingReactions
+        reactions={reactions}
+        onComplete={(id) => setReactions((prev) => prev.filter((r) => r.id !== id))}
+      />
+      <PingModal
+        isOpen={isPingModalOpen}
+        onClose={() => setIsPingModalOpen(false)}
+        initialTab={modalInitialTab}
+        onRecommendationSubmitted={(rec) => setLatestRecommendation(rec)}
+      />
+      <PingToast ping={activePing} onClose={() => setActivePing(null)} />
     </div>
   );
 }
+
+
+

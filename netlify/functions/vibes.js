@@ -32,12 +32,13 @@ export default async (req) => {
 
     // POST: Submit a new global vote
     if (req.method === "POST") {
-        let payload = {};
+        let payload;
         try {
             payload = await req.json();
         } catch {
             return errorResponse("Invalid JSON body", 400);
         }
+
 
         const { voteType } = payload;
         if (voteType !== "fire" && voteType !== "flag") {

@@ -1,4 +1,6 @@
 import { jsonResponse, errorResponse, optionsResponse } from "./utils/cors.js";
+import { getSupabaseClient } from "./utils/supabase.js";
+
 
 function escapeHtml(str) {
     if (typeof str !== "string") return "";
@@ -69,13 +71,47 @@ export default async function handler(req) {
             });
 
             if (!resendRes.ok) {
-                throw new Error("Resend API failed: " + await resendRes.text());
+                console.error("Resend API failed: " + await resendRes.text());
             }
         } else {
             console.log("NOTICE: RESEND_API_KEY is not set. Ping simulated:", { name, message });
         }
 
+        // Realtime notification broadcast & storage
+        const supabase = getSupabaseClient();
+        if (supabase) {
+            const pingPayload = {
+                name: safeName,
+                message: safeMessage,
+                timestamp: new Date().toISOString(),
+            };
+
+            // Broadcast to connected frontend clients immediately
+            try {
+                const channel = supabase.channel("izrah-live");
+                await channel.send({
+                    type: "broadcast",
+                    event: "ping_received",
+                    payload: pingPayload,
+                });
+            } catch (broadcastErr) {
+                console.error("Ping broadcast error:", broadcastErr);
+            }
+
+            // Persist to database if pings table exists
+            try {
+                await supabase.from("pings").insert({
+                    name: safeName,
+                    message: safeMessage,
+                    created_at: new Date().toISOString(),
+                });
+            } catch {
+                // Silently ignore if table does not exist
+            }
+        }
+
         return jsonResponse({ success: true });
+
 
     } catch (error) {
         console.error("Ping error:", error);

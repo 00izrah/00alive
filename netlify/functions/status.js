@@ -78,8 +78,10 @@ export default async (req) => {
                 isPlaying:  track.isPlaying,
                 progressMs: track.progressMs,
                 durationMs: track.durationMs,
+                previewUrl: track.previewUrl || null,
                 url:        track.url,
             },
+
             recentTracks,
             topGenre:    listeningStats.topGenre || "unknown",
             loyalty:     topArtists.length > 0 ? topArtists : listeningStats.topArtists || [],

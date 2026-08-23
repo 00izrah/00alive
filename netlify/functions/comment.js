@@ -3,7 +3,7 @@ import { getSupabaseClient } from "./utils/supabase.js";
 import { jsonResponse, errorResponse, optionsResponse } from "./utils/cors.js";
 import { getWATHour, getTimeContext, getTimeSlot } from "./utils/time.js";
 
-async function getGroqComments(track, artist, tier, energy, valence) {
+async function getGroqComments(track, artist, tier, energy, valence, bpm = null) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return null;
 
@@ -12,51 +12,49 @@ async function getGroqComments(track, artist, tier, energy, valence) {
 
     const moodHint =
         valence > 0.6
-            ? "upbeat/vibing"
+            ? "upbeat/hype"
             : valence < 0.4
-                ? "melancholic/brooding/in the trenches"
-                : "neutral/reflective";
+                ? "melancholic/in the trenches"
+                : "neutral/chill";
 
     const energyHint =
         energy > 0.7
-            ? "high energy"
+            ? "hyperactive"
             : energy < 0.3
-                ? "low energy, very calm"
-                : "mid energy";
+                ? "calm/slow"
+                : "mid tempo";
 
-    const prompt = `You write short, funny comments for "izrah.live" — a site that tracks if Izrah is alive based on his Spotify. His friends visit to check on him and laugh.
+    const bpmHint = bpm ? `at ${bpm} BPM` : "";
+
+    const prompt = `You write short, witty, comedic commentary for "izrah.live" — a live dashboard tracking if Izrah is alive based on his Spotify. Friends visit to laugh and check in on him.
 
 Current listening:
 - Track: "${track}" by ${artist}
-- Vibe: ${moodHint}, ${energyHint}  
-- Time: ${timeContext}
+- Vibe: ${moodHint}, ${energyHint} ${bpmHint}
+- Time in WAT (West Africa): ${timeContext} (${hour}:00)
 - Status: ${tier}
 
-Write 5 comments. Mix up the structures — some are observations, some are accusations, some are fake concern, some are just stating facts with no emotion. Third person only, referring to him as "he" or "this man" or "dude" or "izrah."
+Write 5 short hilarious commentary lines. Keep the voice witty, Nigerian Gen Z group chat humor, observant, slightly unhinged but affectionate banter.
+Refer to him in third person as "he", "this guy", "izrah", "broski", or "the boy".
 
-Examples of the register to match — vary your structure like these do:
-- "${artist} at this hour. he already knows what he's doing."
-- "he is alive. the music choice is doing a lot of talking though."
-- "lore accurate. ${artist} fits exactly what he has going on right now."
+Examples of tone & register:
+- "${artist} at this ungodly hour. he is going through a spiritual warfare."
+- "he is alive. whether his music taste survived is another conversation."
+- "listening to ${artist} in the middle of the night. someone check his bank app."
+- "no way he put ${track} on repeat. let him cook though."
 
-BANNED phrases and patterns (do not use any of these):
-- "vibes", "feeling", "lost in", "immersed in"
-- starting with "In the" 
-- any exclamation marks
-- rhetorical questions
-- anything that sounds like a music review
+Rules:
+- Maximum 16 words per comment.
+- No generic quotes, no corporate speak, no therapy jargon.
+- No markdown formatting.
+- Emojis allowed (max 1 per line).
 
-- Do NOT write anything that sounds like a therapy observation or a deep life quote
-- Write like a friend in a group chat who just saw something embarrassing, not a narrator
-- Refer to him as "he", "broski", "dude", "this guy", or "izrah" — keep it casual group chat banter
-
-Maximum 18 words each. Emojis allowed, max one per line.
-
-Return a raw JSON array of 5 strings. No markdown. No object wrapper. Just the array starting with [ and ending with ].`;
+Return ONLY a raw JSON array of 5 strings starting with [ and ending with ].`;
 
     const models = [
-        "allam-2-7b",
+        "openai/gpt-oss-120b",
         "qwen/qwen3.6-27b",
+        "openai/gpt-oss-20b",
     ];
 
     for (const model of models) {
@@ -67,16 +65,17 @@ Return a raw JSON array of 5 strings. No markdown. No object wrapper. Just the a
                 messages: [
                     {
                         role: "system",
-                        content: "You are a witty Nigerian Gen Z friend writing roast comments. You always respond with only a valid JSON array of strings. Nothing else. No object, no markdown, no explanation. Start your response with [ and end with ]."
+                        content: "You are a witty Nigerian Gen Z friend writing hilarious roast commentary. Output only a raw JSON array of strings [\"...\", \"...\"]. No wrapper, no explanation."
                     },
                     { role: "user", content: prompt }
                 ],
             };
 
             // Hide reasoning tokens for reasoning models
-            if (model.includes("qwen")) {
+            if (model.includes("qwen") || model.includes("openai")) {
                 bodyPayload.reasoning_format = "hidden";
             }
+
 
             const res = await fetch(
                 "https://api.groq.com/openai/v1/chat/completions",
@@ -145,14 +144,15 @@ export default async (req) => {
         return errorResponse("Method Not Allowed", 405);
     }
 
-    let payload = {};
+    let payload;
     try {
         payload = await req.json();
     } catch {
         return errorResponse("Invalid JSON body", 400);
     }
 
-    const { trackId, track, artist, tier, energy, valence } = payload;
+
+    const { trackId, track, artist, tier, energy, valence, bpm } = payload;
 
     if (!trackId || !track || !artist) {
         return jsonResponse({
@@ -189,7 +189,9 @@ export default async (req) => {
             tier,
             parseFloat(energy) || 0.5,
             parseFloat(valence) || 0.5,
+            bpm ? parseInt(bpm, 10) : null,
         );
+
 
         if (groqComments) {
             if (supabase) {
@@ -206,8 +208,27 @@ export default async (req) => {
 
             const pick =
                 groqComments[Math.floor(Math.random() * groqComments.length)];
+
+            if (supabase) {
+                try {
+                    const channel = supabase.channel("izrah-live");
+                    await channel.send({
+                        type: "broadcast",
+                        event: "comment_updated",
+                        payload: {
+                            trackId,
+                            comment: pick,
+                            source: "groq-fresh",
+                        },
+                    });
+                } catch (broadcastErr) {
+                    console.error("Comment broadcast error:", broadcastErr);
+                }
+            }
+
             return jsonResponse({ comment: pick, source: "groq-fresh" });
         }
+
     } catch (err) {
         console.error("Comment function error:", err);
     }

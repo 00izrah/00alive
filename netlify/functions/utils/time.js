@@ -26,11 +26,12 @@ export function getTimeSlot(hour) {
 
 export function generateVibe(energy, valence, playedAt) {
     const hour = playedAt ? getWATHour(new Date(playedAt)) : getWATHour();
-    let timePhrase = "day";
+    let timePhrase;
     if (hour >= 5 && hour < 12) timePhrase = "morning";
     else if (hour >= 12 && hour < 17) timePhrase = "mid-day";
     else if (hour >= 17 && hour < 21) timePhrase = "evening";
     else timePhrase = "late night";
+
 
     if (energy > 0.7 && valence > 0.6) return `high-energy ${timePhrase}`;
     if (energy > 0.7 && valence <= 0.6) return `intense ${timePhrase} session`;

@@ -1,141 +1,193 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const BEAT_PATH =
-	"M0,50 C10,50 15,10 25,50 C35,90 40,50 50,50 C60,50 65,10 75,50 C85,90 90,50 100,50 C110,50 115,10 125,50 C135,90 140,50 150,50 C160,50 165,10 175,50 C185,90 190,50 200,50";
-const MELLOW_PATH =
-	"M0,50 C25,40 25,60 50,50 C75,40 75,60 100,50 C125,40 125,60 150,50 C175,40 175,60 200,50";
-const ERRATIC_PATH =
-	"M0,50 C10,-10 15,110 25,50 C35,-10 40,110 50,50 C60,-10 65,110 75,50 C85,-10 90,110 100,50 C110,-10 115,110 125,50 C135,-10 140,110 150,50 C160,-10 165,110 175,50 C185,-10 190,110 200,50";
-const FLAT_PATH = "M0,50 C50,50 100,50 150,50 C175,50 190,50 200,50";
+// Standard ECG rhythm with P-wave, sharp QRS complex, and T-wave
+const ECG_WAVE_PATH =
+  "M0,50 L20,50 C24,50 26,45 28,45 C30,45 32,50 36,50 L40,50 L43,56 L47,12 L52,86 L56,50 L60,50 C65,50 68,36 74,36 C80,36 83,50 88,50 L110,50 C114,50 116,45 118,45 C120,45 122,50 126,50 L130,50 L133,56 L137,12 L142,86 L146,50 L150,50 C155,50 158,36 164,36 C170,36 173,50 178,50 L200,50";
+
+const FLATLINE_PATH =
+  "M0,50 L200,50";
 
 export function EKG({
-	bpm = 80,
-	energy = 0.5,
-	valence = 0.5,
-	status,
-	color = "#c8ff00",
+  bpm = 80,
+  energy = 0.5,
+  valence = 0.5,
+  status,
+  color = "#c8ff00",
 }) {
-	const pathRef = useRef(null);
+  const pathRef = useRef(null);
+  const [leadingPoint, setLeadingPoint] = useState({ x: 0, y: 50 });
+  const [pulsePeak, setPulsePeak] = useState(false);
 
-	const isDead = status === "CHECK ON HIM" || status === "UNKNOWN";
+  const isDead = status === "CHECK ON HIM" || status === "UNKNOWN";
+  const displayPath = isDead ? FLATLINE_PATH : ECG_WAVE_PATH;
 
-	let displayPath = BEAT_PATH;
-	let strokeW = "1.5";
-	let isMellow = false;
+  // Clamped real BPM
+  const currentBpm = isDead ? 0 : Math.min(220, Math.max(45, Math.round(bpm || 80)));
 
-	if (isDead) {
-		displayPath = FLAT_PATH;
-	} else if (energy < 0.45) {
-		displayPath = MELLOW_PATH;
-		strokeW = "2.5";
-		isMellow = true;
-	} else if (energy >= 0.6 && valence < 0.4) {
-		displayPath = ERRATIC_PATH;
-		strokeW = "2.0";
-	}
+  // Cycle interval in seconds directly tied to track BPM (60 / BPM * 2 for dual-complex path)
+  const beatIntervalSec = currentBpm > 0 ? (60 / currentBpm) * 2 : 3;
 
-	const duration = (60 / Math.max(bpm, 40)) * (isMellow ? 1.5 : 1);
+  // Telemetry status description
+  const tempoLabel = isDead
+    ? "FLATLINE"
+    : currentBpm > 135
+      ? "HYPERDRIVE"
+      : currentBpm > 105
+        ? "ELEVATED"
+        : currentBpm > 75
+          ? "ACTIVE"
+          : "RESTING";
 
-	useEffect(() => {
-		const path = pathRef.current;
-		if (!path) return;
+  useEffect(() => {
+    const path = pathRef.current;
+    if (!path || isDead) return;
 
-		let rafId = 0;
-		let startTime = null;
+    let rafId = 0;
+    let startTime = null;
 
-		if (isDead) {
-			path.style.strokeDashoffset = "0";
-			path.style.strokeDasharray = "none";
-			return;
-		}
+    function animate(timestamp) {
+      if (!pathRef.current) return;
+      if (!startTime) startTime = timestamp;
 
-		function step(timestamp) {
-			if (!pathRef.current) return;
-			if (!startTime) startTime = timestamp;
-			const elapsed = timestamp - startTime;
-			const cycleMs = duration * 1000;
-			const progress = (elapsed % cycleMs) / cycleMs;
+      const elapsed = (timestamp - startTime) / 1000;
+      const cycleProgress = (elapsed % beatIntervalSec) / beatIntervalSec;
 
-			const length = pathRef.current.getTotalLength();
-			if (length > 0) {
-				pathRef.current.style.strokeDasharray = `${length}`;
-				pathRef.current.style.strokeDashoffset = `${length * (1 - progress)}`;
-			}
+      const pathLength = pathRef.current.getTotalLength();
+      if (pathLength > 0) {
+        // Draw trailing illuminated segment
+        const currentLength = pathLength * cycleProgress;
+        pathRef.current.style.strokeDasharray = `${pathLength}`;
+        pathRef.current.style.strokeDashoffset = `${pathLength * (1 - cycleProgress)}`;
 
-			rafId = requestAnimationFrame(step);
-		}
+        // Get coordinates for the leading scan head
+        try {
+          const pt = pathRef.current.getPointAtLength(currentLength);
+          setLeadingPoint({ x: pt.x, y: pt.y });
 
-		const t = setTimeout(() => {
-			if (!pathRef.current) return;
-			const length = pathRef.current.getTotalLength();
-			if (!length) return;
+          // Detect when passing the main QRS contraction spike (sharp peak y < 25)
+          setPulsePeak(pt.y < 25);
+        } catch {
+          // Ignore SVG measurement edge cases
+        }
+      }
 
-			pathRef.current.style.strokeDasharray = `${length}`;
-			pathRef.current.style.strokeDashoffset = `${length}`;
-			rafId = requestAnimationFrame(step);
-		}, 50);
+      rafId = requestAnimationFrame(animate);
+    }
 
-		return () => {
-			clearTimeout(t);
-			if (rafId) cancelAnimationFrame(rafId);
-		};
-	}, [bpm, isDead, duration, displayPath]);
+    rafId = requestAnimationFrame(animate);
 
-	return (
-		<div className="w-full overflow-hidden" style={{ height: "60px" }}>
-			<svg
-				viewBox="0 0 200 100"
-				className="w-full h-full"
-				preserveAspectRatio="none"
-			>
-				<defs>
-					<filter
-						id="glow"
-						x="-50%"
-						y="-50%"
-						width="200%"
-						height="200%"
-					>
-						<feGaussianBlur stdDeviation="3" result="coloredBlur" />
-						<feMerge>
-							<feMergeNode in="coloredBlur" />
-							<feMergeNode in="SourceGraphic" />
-						</feMerge>
-					</filter>
-				</defs>
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [currentBpm, isDead, beatIntervalSec, displayPath]);
 
-				{energy > 0.7 && !isDead && (
-					<path
-						d={displayPath}
-						fill="none"
-						stroke={color}
-						strokeWidth="4"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						style={{
-							opacity: 0.15,
-							filter: "blur(2px)",
-							transition: "d 0.5s ease-in-out",
-						}}
-					/>
-				)}
+  return (
+    <div className="w-full relative">
+      {/* Telemetry Header */}
+      <div className="flex items-center justify-between mb-2 px-1">
+        <div className="flex items-center gap-2">
+          <span
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              isDead
+                ? "bg-dead opacity-60"
+                : pulsePeak
+                  ? "scale-150 shadow-[0_0_10px_#c8ff00]"
+                  : "scale-100"
+            }`}
+            style={{ backgroundColor: isDead ? "#ff3b30" : color }}
+          />
+          <span className="text-[10px] font-mono tracking-widest uppercase font-bold text-text">
+            {isDead ? "00" : currentBpm} <span className="text-muted font-normal">BPM</span>
+          </span>
+        </div>
 
-				<path
-					ref={pathRef}
-					d={displayPath}
-					fill="none"
-					stroke={isDead ? "#ff3b30" : color}
-					strokeWidth={strokeW}
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					style={{
-						opacity: isDead ? 0.4 : 0.9,
-						filter: isMellow && !isDead ? `url(#glow)` : "none",
-						transition:
-							"d 0.5s ease-in-out, stroke 0.3s ease, stroke-width 0.5s ease, opacity 0.3s ease",
-					}}
-				/>
-			</svg>
-		</div>
-	);
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-mono uppercase tracking-wider text-muted/70">
+            [RHYTHM: <span style={{ color: isDead ? "#ff3b30" : color }}>{tempoLabel}</span>]
+          </span>
+          <span className="text-[9px] font-mono text-muted/50 hidden sm:inline">
+            E:{Math.round((energy || 0.5) * 100)}% V:{Math.round((valence || 0.5) * 100)}%
+          </span>
+        </div>
+      </div>
+
+      {/* SVG Cardiac Waveform Viewport */}
+      <div className="w-full h-16 relative bg-void/40 border border-border/40 rounded-xl overflow-hidden backdrop-blur-xs flex items-center justify-center">
+        {/* Subtle background oscilloscope grid lines */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, #444 1px, transparent 1px), linear-gradient(to bottom, #444 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+          }}
+        />
+
+        <svg
+          viewBox="0 0 200 100"
+          className="w-full h-full relative z-10"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <filter id="ekgGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Faint static guide baseline */}
+          <path
+            d={displayPath}
+            fill="none"
+            stroke={isDead ? "#ff3b30" : color}
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="opacity-15"
+          />
+
+          {/* Dynamic scanning wave */}
+          <path
+            ref={pathRef}
+            d={displayPath}
+            fill="none"
+            stroke={isDead ? "#ff3b30" : color}
+            strokeWidth={pulsePeak ? "2.5" : "1.8"}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              filter: isDead ? "none" : "url(#ekgGlow)",
+              transition: "stroke-width 0.1s ease",
+            }}
+          />
+
+          {/* Glowing Beacon Scan Head Dot */}
+          {!isDead && leadingPoint && (
+            <>
+              <circle
+                cx={leadingPoint.x}
+                cy={leadingPoint.y}
+                r="3.5"
+                fill="#ffffff"
+                style={{
+                  filter: "drop-shadow(0 0 6px " + color + ")",
+                }}
+              />
+              <circle
+                cx={leadingPoint.x}
+                cy={leadingPoint.y}
+                r={pulsePeak ? "9" : "6"}
+                fill={color}
+                opacity={pulsePeak ? "0.6" : "0.3"}
+                className="transition-all duration-100"
+              />
+            </>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
 }

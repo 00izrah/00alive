@@ -22,21 +22,25 @@ export default async (req) => {
 
             if (data?.updated_at) {
                 const ageMs = Date.now() - new Date(data.updated_at).getTime();
-                if (ageMs < 180000) {
+                if (ageMs < 30000) {
                     return jsonResponse({ ok: true, message: "recently synced, skipping" });
                 }
             }
+
         } catch {
             // Continue if read check fails
         }
     }
 
-    const siteUrl = process.env.URL || process.env.SITE_URL || "http://localhost:8888";
+    const host = req.headers.get("host") || "localhost:5174";
+    const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+    const siteUrl = process.env.URL || process.env.SITE_URL || `${proto}://${host}`;
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
         return errorResponse("CRON_SECRET not configured", 500);
     }
+
 
     try {
         const syncRes = await fetch(`${siteUrl}/.netlify/functions/sync-spotify`, {
