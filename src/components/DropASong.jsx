@@ -41,32 +41,36 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
   const audioRef = useRef(null);
   const lastHandledRecRef = useRef(null);
 
-  // Fetch recommendations from API on mount
+  // Fetch recommendations from API on mount & on tab focus
   useEffect(() => {
-    fetch('/api/recommend')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setRecommendations(prev => {
-            const merged = [...data];
-            // Merge previously stored items if unique
-            for (const item of prev) {
-              if (!merged.some(m => m.track?.name === item.track?.name && m.name === item.name)) {
-                merged.push(item);
-              }
-            }
-            const finalRecs = merged.slice(0, MAX_RECOMMENDATIONS);
+    const loadRecs = () => {
+      fetch('/api/recommend')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setRecommendations(data.slice(0, MAX_RECOMMENDATIONS));
             try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecs));
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data.slice(0, MAX_RECOMMENDATIONS)));
             } catch {
               // ignore
             }
-            return finalRecs;
-          });
-        }
-      })
-      .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    };
+
+    loadRecs();
+
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        loadRecs();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
 
   // Prepend latest realtime recommendation
   useEffect(() => {

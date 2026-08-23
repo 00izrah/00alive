@@ -25,18 +25,30 @@ export default async (req) => {
         }
 
         try {
+            // 1. Try recommendations table
             const { data, error } = await supabase
                 .from("recommendations")
                 .select("*")
                 .order("created_at", { ascending: false })
                 .limit(10);
 
-            if (error) {
-                console.warn("Error reading recommendations table:", error);
-                return jsonResponse([]);
+            if (!error && Array.isArray(data) && data.length > 0) {
+                return jsonResponse(data);
             }
+        } catch {
+            // Fall through to snapshot fallback
+        }
 
-            return jsonResponse(data || []);
+        // 2. Fallback: Read from spotify_snapshot.listening_stats.recommendations
+        try {
+            const { data: snapshotData } = await supabase
+                .from("spotify_snapshot")
+                .select("listening_stats")
+                .eq("id", 1)
+                .maybeSingle();
+
+            const snapshotRecs = snapshotData?.listening_stats?.recommendations || [];
+            return jsonResponse(snapshotRecs);
         } catch (err) {
             console.error("Recommendations GET error:", err);
             return jsonResponse([]);
@@ -84,14 +96,36 @@ export default async (req) => {
         };
 
         if (supabase) {
-            // Save to database
+            // 1. Try to save to recommendations table
             try {
                 await supabase.from("recommendations").insert(recRecord);
             } catch (dbErr) {
                 console.warn("Could not insert to recommendations table:", dbErr);
             }
 
-            // Broadcast in real-time to connected clients
+            // 2. Dual persistence: Save into spotify_snapshot.listening_stats.recommendations
+            try {
+                const { data: snapshotData } = await supabase
+                    .from("spotify_snapshot")
+                    .select("listening_stats")
+                    .eq("id", 1)
+                    .maybeSingle();
+
+                const existingStats = snapshotData?.listening_stats || {};
+                const existingRecs = existingStats.recommendations || [];
+                const updatedRecs = [recRecord, ...existingRecs.filter(r => !(r.track?.name === cleanTrack.name && r.name === name))].slice(0, 10);
+
+                await supabase.from("spotify_snapshot").update({
+                    listening_stats: {
+                        ...existingStats,
+                        recommendations: updatedRecs,
+                    },
+                }).eq("id", 1);
+            } catch (snapshotErr) {
+                console.warn("Could not update recommendations in snapshot:", snapshotErr);
+            }
+
+            // 3. Broadcast in real-time to all connected clients
             try {
                 const channel = supabase.channel("izrah-live");
                 await channel.send({
@@ -106,6 +140,7 @@ export default async (req) => {
 
         return jsonResponse({ success: true, recommendation: recRecord });
     }
+
 
     return errorResponse("Method not allowed", 405);
 };

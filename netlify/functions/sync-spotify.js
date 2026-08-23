@@ -124,8 +124,10 @@ export default async (req) => {
             topGenre,
             topArtists: finalTopArtists.map((a) => ({ name: a.name, count: a.affinity })),
             artistHistory: updatedArtistHistory,
+            recommendations: existingSnapshot?.listening_stats?.recommendations || [],
             clockData,
         };
+
 
 
 

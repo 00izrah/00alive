@@ -268,7 +268,25 @@ export default function App() {
             }
           }
         )
+        // Database changes on recommendations
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'recommendations' },
+          (payload) => {
+            console.log('[Realtime] Recommendation inserted via DB:', payload);
+            if (isMounted && payload.new) {
+              setLatestRecommendation(payload.new);
+              triggerFloatingReaction({
+                emoji: '🎵',
+                soundType: 'cyber',
+                isVoicePing: false,
+                label: `${payload.new.name || 'someone'} dropped a song`,
+              }, true);
+            }
+          }
+        )
         // Database changes on streaks
+
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'streaks' },
