@@ -13,6 +13,7 @@ import { SoundBiteReactions } from './components/SoundBiteReactions';
 import { FloatingReactions } from './components/FloatingReactions';
 import { DropASong } from './components/DropASong';
 import { GroovePet } from './components/GroovePet';
+import { AnalyticsIcon } from './components/Icons';
 
 const fac = new FastAverageColor();
 
@@ -160,7 +161,8 @@ export default function App() {
     const reactionId = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const newReaction = {
       id: reactionId,
-      emoji: reactionData.emoji || '🔥',
+      reactionId: reactionData.reactionId || reactionData.emoji || 'fire',
+      emoji: reactionData.emoji || reactionData.reactionId || 'fire',
       soundType: reactionData.soundType || 'fire',
       isVoicePing: Boolean(reactionData.isVoicePing),
       label: reactionData.label || null,
@@ -260,7 +262,8 @@ export default function App() {
                 timestamp: payload.new.created_at || new Date().toISOString(),
               });
               triggerFloatingReaction({
-                emoji: '🔊',
+                reactionId: 'sonar',
+                emoji: 'sonar',
                 soundType: 'sonar',
                 isVoicePing: true,
                 label: `${payload.new.name} pinged`,
@@ -277,7 +280,8 @@ export default function App() {
             if (isMounted && payload.new) {
               setLatestRecommendation(payload.new);
               triggerFloatingReaction({
-                emoji: '🎵',
+                reactionId: 'music',
+                emoji: 'music',
                 soundType: 'cyber',
                 isVoicePing: false,
                 label: `${payload.new.name || 'someone'} dropped a song`,
@@ -332,7 +336,8 @@ export default function App() {
             if (isMounted && payload) {
               setActivePing(payload);
               triggerFloatingReaction({
-                emoji: '🔊',
+                reactionId: 'sonar',
+                emoji: 'sonar',
                 soundType: 'sonar',
                 isVoicePing: true,
                 label: `${payload.name || 'someone'} pinged`,
@@ -360,7 +365,8 @@ export default function App() {
             if (isMounted && payload) {
               setLatestRecommendation(payload);
               triggerFloatingReaction({
-                emoji: '🎵',
+                reactionId: 'music',
+                emoji: 'music',
                 soundType: 'cyber',
                 isVoicePing: false,
                 label: `${payload.name || 'someone'} dropped a song`,
@@ -548,7 +554,7 @@ export default function App() {
         {/* ─── DEEP DIVE SECTION ─────────────────────────────────── */}
         <div className="mb-5 pt-3 border-t border-white/[0.08] flex items-center justify-between">
           <p className="text-muted text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5">
-            <span>📊</span>
+            <AnalyticsIcon className="w-3.5 h-3.5 text-alive" />
             <span>Analytics & Archives</span>
           </p>
           <span className="text-[9px] font-mono text-muted/50">4-WEEK AGGREGATE</span>

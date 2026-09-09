@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { isMuted, toggleMute, playHapticClick } from '../lib/audioSynth';
+import { FireIcon, SkullIcon, HeartIcon, BoltIcon, SonarIcon } from './Icons';
 
 const REACTION_OPTIONS = [
-  { id: 'fire',  emoji: '🔥', label: '',  sound: 'fire' },
-  { id: 'skull', emoji: '💀', label: '',  sound: 'skull' },
-  { id: 'heart', emoji: '❤️', label: '', sound: 'heart' },
-  { id: 'cyber', emoji: '⚡', label: '',  sound: 'cyber' },
-  { id: 'sonar', emoji: '🔊', label: '', sound: 'sonar', isVoicePing: true },
+  { id: 'fire',  icon: FireIcon,  sound: 'fire',  color: 'text-amber-400 group-hover:text-amber-300' },
+  { id: 'skull', icon: SkullIcon, sound: 'skull', color: 'text-neutral-300 group-hover:text-white' },
+  { id: 'heart', icon: HeartIcon, sound: 'heart', color: 'text-rose-500 group-hover:text-rose-400' },
+  { id: 'cyber', icon: BoltIcon,  sound: 'cyber', color: 'text-alive group-hover:text-alive' },
+  { id: 'sonar', icon: SonarIcon, sound: 'sonar', color: 'text-cyan-400 group-hover:text-cyan-300', isVoicePing: true },
 ];
 
 export function SoundBiteReactions({ onReaction, isLoading }) {
@@ -28,10 +29,11 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
 
     if (onReaction) {
       onReaction({
-        emoji: reaction.emoji,
+        reactionId: reaction.id,
+        emoji: reaction.id,
         soundType: reaction.sound,
         isVoicePing: Boolean(reaction.isVoicePing),
-        label: reaction.label,
+        label: reaction.label || '',
       });
     }
   };
@@ -70,6 +72,7 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
       <div className="grid grid-cols-5 gap-1.5 pt-1 h-full items-center justify-items-center">
         {REACTION_OPTIONS.map((item) => {
           const isActive = activeButton === item.id;
+          const Icon = item.icon;
           return (
             <button
               key={item.id}
@@ -81,13 +84,11 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
                   : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.08] hover:border-alive/40 hover:-translate-y-0.5 shadow-sm'
               }`}
             >
-              <span
-                className={`text-xl leading-none transition-transform duration-150 group-hover:scale-110 ${
+              <Icon
+                className={`w-5 h-5 transition-transform duration-150 group-hover:scale-110 ${item.color} ${
                   isActive ? 'scale-125' : ''
                 }`}
-              >
-                {item.emoji}
-              </span>
+              />
             </button>
           );
         })}
@@ -101,4 +102,5 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
     </div>
   );
 }
+
 

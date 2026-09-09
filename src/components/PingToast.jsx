@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BoltIcon } from './Icons';
 
 export function PingToast({ ping, onClose }) {
   const [dismissed, setDismissed] = useState(false);
@@ -25,7 +26,7 @@ export function PingToast({ ping, onClose }) {
         <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-alive shadow-[0_0_12px_#c8ff00]" />
 
         <div className="w-8 h-8 rounded-full bg-alive/15 border border-alive/40 flex items-center justify-center shrink-0 mt-0.5 shadow-[0_0_10px_rgba(200,255,0,0.2)]">
-          <span className="text-alive text-sm animate-pulse">⚡</span>
+          <BoltIcon className="w-4 h-4 text-alive animate-pulse" />
         </div>
 
         <div className="flex-1 min-w-0 pr-2">

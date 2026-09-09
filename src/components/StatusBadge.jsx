@@ -1,3 +1,5 @@
+import { MoonIcon } from './Icons';
+
 const colorMap = {
 	alive: {
 		bg: "bg-alive/10",
@@ -64,7 +66,8 @@ export function StatusBadge({ tier, label, color = "alive", genre, isPlaying }) 
 			{/* Sleep / Dormant Sub-tag */}
 			{isGhostMode && (
 				<div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-mono tracking-widest uppercase border border-warn/30 bg-warn/5 text-warn/90 backdrop-blur-sm shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
-					<span>💤 probably sleeping</span>
+					<MoonIcon className="w-3 h-3 text-warn" />
+					<span>probably sleeping</span>
 				</div>
 			)}
 

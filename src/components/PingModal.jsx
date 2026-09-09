@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AlertIcon, MusicIcon, HourglassIcon, CancelIcon } from "./Icons";
 
 function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmitted }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'ping' | 'recommend'
@@ -133,7 +134,7 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                 : "text-muted hover:text-text"
             }`}
           >
-            <span>🚨</span>
+            <AlertIcon className="w-3.5 h-3.5" />
             <span>Check In</span>
           </button>
           <button
@@ -144,7 +145,7 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                 : "text-muted hover:text-text"
             }`}
           >
-            <span>🎵</span>
+            <MusicIcon className="w-3.5 h-3.5" />
             <span>Drop Song</span>
           </button>
         </div>
@@ -228,8 +229,8 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                     className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all placeholder:text-muted/50 shadow-inner"
                   />
                   {isSearching && (
-                    <span className="absolute right-3.5 top-3 text-xs text-muted animate-spin">
-                      ⏳
+                    <span className="absolute right-3.5 top-3 text-alive">
+                      <HourglassIcon className="w-3.5 h-3.5 animate-spin" />
                     </span>
                   )}
 
@@ -275,10 +276,10 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                   <button
                     type="button"
                     onClick={() => { setSelectedTrack(null); setSearchQuery(""); }}
-                    className="text-muted hover:text-text text-xs p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
+                    className="text-muted hover:text-text p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors flex items-center justify-center"
                     title="Change track"
                   >
-                    ✕
+                    <CancelIcon className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}

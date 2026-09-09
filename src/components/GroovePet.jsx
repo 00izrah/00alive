@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { HeadphonesIcon, MoonIcon, BoltIcon } from './Icons';
 
 const FUN_MESSAGES = [
-  "VIBIN' 🔥",
-  "HE COOKIN' 🍳",
-  "LIL BRO GROOVIN' 🕺",
-  "CERTIFIED BANGER 💿",
-  "FEELIN' THE BASS 🔊",
-  "CAN'T STOP ⚡",
-  "ABSOLUTE CINEMA 🎬"
+  "VIBIN' // 100%",
+  "COOKIN' UP HEAT",
+  "LIL BRO GROOVIN'",
+  "CERTIFIED BANGER",
+  "FEELIN' THE BASS",
+  "LOCK IN // MAX",
+  "PEAK AUDIO DETECTED"
 ];
 
 export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor = '#c8ff00' }) {
@@ -22,10 +23,11 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
   const handleClick = () => {
     setClickCount(prev => prev + 1);
     setSpecialMove(true);
+    playSpecialMove();
 
     const randomMsg = isPlaying
       ? FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)]
-      : "5 MORE MINUTES... 💤";
+      : "5 MORE MINUTES...";
 
     setBubbleText(randomMsg);
 
@@ -37,6 +39,8 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
       setBubbleText(null);
     }, 2200);
   };
+
+  const playSpecialMove = () => {};
 
   return (
     <div
@@ -54,7 +58,13 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
       {/* Header */}
       <div className="flex items-center justify-between mb-1 relative z-10">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs">{isPlaying ? "🎧" : "💤"}</span>
+          <span className="text-xs flex items-center justify-center">
+            {isPlaying ? (
+              <HeadphonesIcon className="w-3.5 h-3.5 text-alive" />
+            ) : (
+              <MoonIcon className="w-3.5 h-3.5 text-muted" />
+            )}
+          </span>
           <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold">
             — gbedu
           </p>
@@ -202,8 +212,15 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
         <span className="group-hover:text-text/80 transition-colors">
           {isPlaying ? "click to hype" : "click to wake"}
         </span>
-        <span className="px-1.5 py-0.5 rounded bg-white/[0.04] text-alive border border-alive/20">
-          {clickCount > 0 ? `⚡ ${clickCount}` : "tap →"}
+        <span className="px-1.5 py-0.5 rounded bg-white/[0.04] text-alive border border-alive/20 flex items-center gap-1">
+          {clickCount > 0 ? (
+            <>
+              <BoltIcon className="w-3 h-3 text-alive" />
+              <span>{clickCount}</span>
+            </>
+          ) : (
+            <span>tap →</span>
+          )}
         </span>
       </div>
 

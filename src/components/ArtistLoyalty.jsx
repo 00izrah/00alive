@@ -1,3 +1,5 @@
+import { FireIcon, RadioIcon, MusicIcon } from './Icons';
+
 export function ArtistLoyalty({ topArtists = [], isLoading }) {
     if (isLoading) {
         return <div className="glass-panel rounded-2xl p-5 h-48 animate-pulse" />;
@@ -8,7 +10,7 @@ export function ArtistLoyalty({ topArtists = [], isLoading }) {
             <div className="glass-panel rounded-2xl p-5 mb-8 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xs font-mono font-bold text-text uppercase tracking-widest flex items-center gap-2">
-                        <span className="text-alive text-xs">🔥</span>
+                        <FireIcon className="w-3.5 h-3.5 text-alive" />
                         Heavy Rotation
                     </h3>
                     <span className="text-[9px] font-mono text-muted uppercase tracking-widest">
@@ -34,7 +36,7 @@ export function ArtistLoyalty({ topArtists = [], isLoading }) {
         <div className="glass-panel-interactive rounded-2xl p-5 mb-8 relative overflow-hidden select-none">
             <div className="flex items-center justify-between mb-5 relative z-10">
                 <h3 className="text-xs font-mono font-bold text-text uppercase tracking-widest flex items-center gap-2">
-                    <span className="text-alive">📻</span>
+                    <RadioIcon className="w-3.5 h-3.5 text-alive" />
                     <span>Heavy Rotation</span>
                 </h3>
                 <span className="text-[9px] font-mono text-muted-light uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.02]">
@@ -61,8 +63,8 @@ export function ArtistLoyalty({ topArtists = [], isLoading }) {
                                 className="w-9 h-9 rounded-full object-cover border border-white/15 group-hover/item:border-alive/60 group-hover/item:scale-105 transition-all shadow-sm"
                             />
                         ) : (
-                            <div className="w-9 h-9 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center text-xs text-muted">
-                                🎵
+                            <div className="w-9 h-9 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center text-muted">
+                                <MusicIcon className="w-4 h-4 text-muted/60" />
                             </div>
                         )}
 

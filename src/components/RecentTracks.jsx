@@ -1,3 +1,5 @@
+import { TimeIcon } from './Icons';
+
 export function RecentTracks({ tracks, isLoading }) {
   if (isLoading) {
     return (
@@ -22,7 +24,7 @@ export function RecentTracks({ tracks, isLoading }) {
     <div className="glass-panel-interactive rounded-2xl p-5 mt-6 relative select-none">
       <div className="flex items-center justify-between mb-4">
         <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold flex items-center gap-1.5">
-          <span>⏮</span>
+          <TimeIcon className="w-3.5 h-3.5 text-alive" />
           <span>Recent History</span>
         </p>
         <span className="text-[9px] font-mono text-muted/60">

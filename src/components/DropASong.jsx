@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { MusicIcon, AddIcon, HeadphonesIcon, ArrowLeftIcon, ArrowRightIcon } from './Icons';
 
 const STORAGE_KEY = 'izrah_song_drops';
 const MAX_RECOMMENDATIONS = 5;
@@ -174,7 +175,7 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
       {/* Header */}
       <div className="flex items-center justify-between mb-3 relative z-10">
         <div className="flex items-center gap-1.5">
-          <span className="text-alive text-xs">🎵</span>
+          <MusicIcon className="w-3.5 h-3.5 text-alive" />
           <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold">
             — community drops
           </p>
@@ -183,7 +184,7 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
           onClick={onOpenRecommendModal}
           className="px-3 py-1 rounded-full border border-alive/40 bg-alive/10 hover:bg-alive/20 text-alive text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(200,255,0,0.15)] active:scale-95 flex items-center gap-1"
         >
-          <span>+</span>
+          <AddIcon className="w-3 h-3 text-alive" />
           <span>Drop Song</span>
         </button>
       </div>
@@ -201,8 +202,8 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm text-muted">
-                  🎧
+                <div className="w-full h-full flex items-center justify-center text-muted">
+                  <HeadphonesIcon className="w-6 h-6 text-muted/50" />
                 </div>
               )}
               {/* Gloss overlay */}
@@ -283,17 +284,17 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
             <div className="flex gap-1.5">
               <button
                 onClick={handlePrev}
-                className="hover:text-text px-2 py-0.5 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer"
+                className="hover:text-text px-2 py-1 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer flex items-center justify-center"
                 title="Previous drop"
               >
-                ◀
+                <ArrowLeftIcon className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={handleNext}
-                className="hover:text-text px-2 py-0.5 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer"
+                className="hover:text-text px-2 py-1 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer flex items-center justify-center"
                 title="Next drop"
               >
-                ▶
+                <ArrowRightIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -308,7 +309,7 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
           </p>
           <p className="text-alive text-[10px] font-mono mt-1 underline underline-offset-4 flex items-center justify-center gap-1">
             <span>Drop the first track</span>
-            <span>→</span>
+            <ArrowRightIcon className="w-3 h-3" />
           </p>
         </div>
       )}
