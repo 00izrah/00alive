@@ -162,37 +162,38 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-2xl p-4 h-full animate-pulse flex flex-col justify-between">
-        <div className="h-3 bg-surface rounded w-20 mb-2" />
-        <div className="h-10 bg-surface rounded w-full" />
+      <div className="glass-panel rounded-2xl p-4 h-full animate-pulse flex flex-col justify-between">
+        <div className="h-3 bg-surface-elevated rounded w-28 mb-2" />
+        <div className="h-12 bg-surface-elevated rounded w-full" />
       </div>
     );
   }
 
   return (
-    <div className="border border-border rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden bg-surface/20 backdrop-blur-sm group">
+    <div className="glass-panel-interactive rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden select-none">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3 relative z-10">
         <div className="flex items-center gap-1.5">
-          <span className="text-alive text-[10px]">🎵</span>
-          <p className="text-muted text-xs tracking-widest font-mono uppercase">
-            — Community Drops
+          <span className="text-alive text-xs">🎵</span>
+          <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold">
+            — community drops
           </p>
         </div>
         <button
           onClick={onOpenRecommendModal}
-          className="px-2.5 py-0.5 rounded-full border border-alive/30 bg-alive/10 hover:bg-alive/20 text-alive text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_10px_rgba(200,255,0,0.1)]"
+          className="px-3 py-1 rounded-full border border-alive/40 bg-alive/10 hover:bg-alive/20 text-alive text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(200,255,0,0.15)] active:scale-95 flex items-center gap-1"
         >
-          + Drop Song
+          <span>+</span>
+          <span>Drop Song</span>
         </button>
       </div>
 
       {/* Content */}
       {recommendations.length > 0 && currentRec ? (
-        <div className="pt-1">
+        <div className="pt-0.5 relative z-10">
           <div className="flex items-center gap-3">
             {/* Thumbnail + preview play button */}
-            <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10 bg-void group/cover">
+            <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-surface-elevated group/cover shadow-md">
               {currentRec.track?.albumArt ? (
                 <img
                   src={currentRec.track.albumArt}
@@ -200,27 +201,29 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted">
+                <div className="w-full h-full flex items-center justify-center text-sm text-muted">
                   🎧
                 </div>
               )}
+              {/* Gloss overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10 pointer-events-none" />
 
               <button
                 onClick={handleTogglePreview}
                 title={isPlaying ? "Pause Preview" : "Play 30s Preview"}
-                className="absolute inset-0 m-auto w-7 h-7 rounded-full bg-void/80 border border-alive/40 text-alive flex items-center justify-center transition-transform active:scale-95 cursor-pointer shadow-[0_0_10px_rgba(200,255,0,0.2)] hover:scale-110"
+                className="absolute inset-0 m-auto w-8 h-8 rounded-full bg-void/80 border border-alive/50 text-alive flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-[0_0_12px_rgba(200,255,0,0.3)] hover:scale-110 hover:bg-alive hover:text-void"
               >
                 {audioLoading ? (
-                  <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 ) : isPlaying ? (
-                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                   </svg>
                 ) : (
-                  <svg className="w-3 h-3 fill-current translate-x-0.5" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -234,20 +237,23 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
                   href={currentRec.track?.url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-text font-mono text-xs font-bold truncate hover:text-alive transition-colors"
+                  className="text-text font-mono text-[13px] font-bold truncate hover:text-alive transition-colors flex items-center gap-1"
                 >
-                  {currentRec.track?.name}
+                  <span className="truncate">{currentRec.track?.name}</span>
+                  <svg className="w-3 h-3 opacity-60 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </a>
               </div>
-              <p className="text-muted text-[11px] truncate">
+              <p className="text-muted-light text-[11px] truncate mt-0.5">
                 {currentRec.track?.artist}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-alive/80 text-[9px] font-mono truncate">
-                  suggested by @{currentRec.name}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="px-1.5 py-0.2 rounded bg-white/[0.04] text-alive/90 text-[9px] font-mono border border-alive/20 truncate">
+                  @{currentRec.name}
                 </span>
                 {currentRec.message && (
-                  <span className="text-muted/60 text-[9px] font-mono truncate max-w-[140px]">
+                  <span className="text-muted text-[9px] font-mono truncate italic opacity-80 max-w-[140px]">
                     &quot;{currentRec.message}&quot;
                   </span>
                 )}
@@ -256,24 +262,38 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
           </div>
 
           {/* Carousel footer */}
-          <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/30 text-[9px] font-mono text-muted">
-            <span>
-              {currentIndex + 1} of {recommendations.length} (limit 5)
-            </span>
-            <div className="flex gap-2.5">
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/[0.06] text-[9px] font-mono text-muted">
+            {/* Animated pagination dots */}
+            <div className="flex items-center gap-1.5">
+              {recommendations.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    idx === currentIndex
+                      ? 'w-4 bg-alive shadow-[0_0_8px_#c8ff00]'
+                      : 'w-1.5 bg-white/20'
+                  }`}
+                />
+              ))}
+              <span className="ml-1 text-muted/60 text-[8px]">
+                {currentIndex + 1}/{recommendations.length}
+              </span>
+            </div>
+
+            <div className="flex gap-1.5">
               <button
                 onClick={handlePrev}
-                className="hover:text-text px-1.5 py-0.5 rounded hover:bg-surface transition-colors cursor-pointer"
-                title="Previous recommendation"
+                className="hover:text-text px-2 py-0.5 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer"
+                title="Previous drop"
               >
-                ◀ Prev
+                ◀
               </button>
               <button
                 onClick={handleNext}
-                className="hover:text-text px-1.5 py-0.5 rounded hover:bg-surface transition-colors cursor-pointer"
-                title="Next recommendation"
+                className="hover:text-text px-2 py-0.5 rounded-md hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-colors cursor-pointer"
+                title="Next drop"
               >
-                Next ▶
+                ▶
               </button>
             </div>
           </div>
@@ -281,13 +301,14 @@ export function DropASong({ onOpenRecommendModal, latestRecommendation, isLoadin
       ) : (
         <div
           onClick={onOpenRecommendModal}
-          className="pt-2 pb-1 text-center cursor-pointer group/prompt"
+          className="py-4 text-center cursor-pointer group/prompt rounded-xl hover:bg-white/[0.02] transition-colors"
         >
-          <p className="text-muted text-[11px] font-mono leading-tight group-hover/prompt:text-text transition-colors">
-            No song drops yet.
+          <p className="text-muted-light text-[11px] font-mono leading-tight group-hover/prompt:text-text transition-colors">
+            No song drops yet in the feed.
           </p>
-          <p className="text-alive text-[10px] font-mono mt-1 underline underline-offset-2">
-            Be the first to drop one →
+          <p className="text-alive text-[10px] font-mono mt-1 underline underline-offset-4 flex items-center justify-center gap-1">
+            <span>Drop the first track</span>
+            <span>→</span>
           </p>
         </div>
       )}

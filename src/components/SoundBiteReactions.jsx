@@ -38,47 +38,52 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-2xl p-4 h-full animate-pulse flex flex-col justify-between">
-        <div className="h-3 bg-surface rounded w-20 mb-2" />
-        <div className="h-10 bg-surface rounded w-full" />
+      <div className="glass-panel rounded-2xl p-4 h-full animate-pulse flex flex-col justify-between">
+        <div className="h-3 bg-surface-elevated rounded w-20 mb-2" />
+        <div className="h-10 bg-surface-elevated rounded w-full" />
       </div>
     );
   }
 
   return (
-    <div className="border border-border rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden bg-surface/20 backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-muted text-xs tracking-widest font-mono">
-          valid?
+    <div className="glass-panel-interactive rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden select-none">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2 relative z-10">
+        <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold">
+          — soundboard
         </p>
         <button
           onClick={handleMuteToggle}
           title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
-          className={`px-1 py-0.5 rounded-full border text-[9px] font-mono uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
+          className={`px-2.5 py-0.5 rounded-full border text-[9px] font-mono uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
             muted
-              ? 'border-border text-muted hover:text-text hover:border-border/80 bg-void/50'
-              : 'border-alive/40 text-alive bg-alive/10 hover:bg-alive/20 shadow-[0_0_10px_rgba(200,255,0,0.1)]'
+              ? 'border-white/10 text-muted hover:text-text hover:border-white/20 bg-white/[0.02]'
+              : 'border-alive/40 text-alive bg-alive/10 hover:bg-alive/20 shadow-[0_0_12px_rgba(200,255,0,0.15)]'
           }`}
         >
-          <span>{muted ? '🔇 Muted' : '🔊 Sound On'}</span>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: muted ? '#666' : '#c8ff00' }} />
+          <span>{muted ? 'Muted' : 'Audio On'}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 pt-1 h-full items-center justify-items-center">
+      {/* Tactile Sound Pad Buttons */}
+      <div className="grid grid-cols-5 gap-1.5 pt-1 h-full items-center justify-items-center">
         {REACTION_OPTIONS.map((item) => {
           const isActive = activeButton === item.id;
           return (
             <button
               key={item.id}
               onClick={() => handleTrigger(item)}
-              title="React with sound effect"
-              className="group relative flex items-center justify-center p-2 transition-all duration-200 cursor-pointer bg-transparent border-none outline-none select-none hover:-translate-y-1 active:scale-90"
+              title={`Trigger ${item.sound} sound`}
+              className={`group relative w-10 h-11 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer outline-none border active:scale-90 ${
+                isActive
+                  ? 'bg-alive/20 border-alive shadow-[0_0_15px_rgba(200,255,0,0.4)] scale-105'
+                  : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.08] hover:border-alive/40 hover:-translate-y-0.5 shadow-sm'
+              }`}
             >
               <span
-                className={`text-3xl leading-none transition-all duration-200 group-hover:scale-125 filter drop-shadow-sm ${
-                  isActive
-                    ? 'scale-125 drop-shadow-[0_0_12px_rgba(200,255,0,0.8)]'
-                    : 'opacity-85 hover:opacity-100 hover:drop-shadow-[0_0_8px_rgba(200,255,0,0.4)]'
+                className={`text-xl leading-none transition-transform duration-150 group-hover:scale-110 ${
+                  isActive ? 'scale-125' : ''
                 }`}
               >
                 {item.emoji}
@@ -86,6 +91,12 @@ export function SoundBiteReactions({ onReaction, isLoading }) {
             </button>
           );
         })}
+      </div>
+
+      {/* Footer prompt */}
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[9px] font-mono text-muted relative z-10">
+        <span className="text-muted/70">haptic synth</span>
+        <span className="text-muted/50">5 fx</span>
       </div>
     </div>
   );

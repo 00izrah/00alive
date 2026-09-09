@@ -108,68 +108,71 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm bg-surface border border-border/60 rounded-2xl p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/85 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-[420px] glass-panel rounded-3xl p-6 shadow-2xl border border-white/10 relative overflow-hidden select-none">
+        {/* Background ambient corner glow */}
+        <div className="absolute -top-16 -right-16 w-36 h-36 bg-alive/15 rounded-full blur-2xl pointer-events-none" />
+
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted hover:text-text transition-colors cursor-pointer"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.08] transition-all cursor-pointer"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-5 border-b border-border/50 pb-3">
+        {/* Segmented Tab Navigation */}
+        <div className="flex p-1 bg-surface-elevated/80 border border-white/10 rounded-xl mb-6 relative">
           <button
             onClick={() => { setActiveTab("ping"); setStatus("idle"); }}
-            className={`text-xs font-mono font-bold uppercase tracking-wider pb-1 transition-colors relative cursor-pointer ${
-              activeTab === "ping" ? "text-alive" : "text-muted hover:text-text"
+            className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeTab === "ping"
+                ? "bg-alive text-void shadow-[0_0_12px_rgba(200,255,0,0.3)]"
+                : "text-muted hover:text-text"
             }`}
           >
-            🚨 Check In
-            {activeTab === "ping" && (
-              <span className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-alive" />
-            )}
+            <span>🚨</span>
+            <span>Check In</span>
           </button>
           <button
             onClick={() => { setActiveTab("recommend"); setStatus("idle"); }}
-            className={`text-xs font-mono font-bold uppercase tracking-wider pb-1 transition-colors relative cursor-pointer ${
-              activeTab === "recommend" ? "text-alive" : "text-muted hover:text-text"
+            className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeTab === "recommend"
+                ? "bg-alive text-void shadow-[0_0_12px_rgba(200,255,0,0.3)]"
+                : "text-muted hover:text-text"
             }`}
           >
-            🎵 Drop a Song
-            {activeTab === "recommend" && (
-              <span className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-alive" />
-            )}
+            <span>🎵</span>
+            <span>Drop Song</span>
           </button>
         </div>
 
         {/* Status: Success */}
         {status === "success" ? (
-          <div className="bg-alive/10 border border-alive/20 p-5 rounded-xl text-center flex flex-col items-center justify-center my-4">
-            <div className="w-9 h-9 bg-alive/20 rounded-full flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-alive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          <div className="bg-alive/10 border border-alive/30 p-6 rounded-2xl text-center flex flex-col items-center justify-center my-4 shadow-[0_0_20px_rgba(200,255,0,0.15)]">
+            <div className="w-12 h-12 bg-alive/20 rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(200,255,0,0.3)]">
+              <svg className="w-6 h-6 text-alive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-alive font-mono text-xs font-bold uppercase tracking-widest">
-              {activeTab === "ping" ? "Ping Sent!" : "Track Dropped!"}
+            <p className="text-alive font-mono text-sm font-bold uppercase tracking-widest">
+              {activeTab === "ping" ? "Check-In Received!" : "Track Dropped!"}
             </p>
-            <p className="text-muted text-[11px] font-mono mt-1">
-              {activeTab === "ping" ? "Delivered straight to his signals." : "Broadcasted live to the community inbox."}
+            <p className="text-muted text-[11px] font-mono mt-1.5">
+              {activeTab === "ping" ? "Delivered straight to his live radar." : "Broadcasted live to the community mixtape."}
             </p>
           </div>
         ) : activeTab === "ping" ? (
           /* ── TAB 1: PING FORM ── */
           <form onSubmit={handlePingSubmit} className="space-y-4">
             <div>
-              <p className="text-xs text-muted font-mono leading-relaxed mb-4">
-                Send a direct check-in ping to his phone. Let him know you&apos;re thinking of him.
+              <p className="text-xs text-muted-light font-mono leading-relaxed mb-4">
+                Send a direct presence ping to his dashboard. Let him know you&apos;re tuned in.
               </p>
-              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1">
-                Your Name <span className="text-alive">*</span>
+              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1.5 font-semibold">
+                Your Handle / Name <span className="text-alive">*</span>
               </label>
               <input
                 type="text"
@@ -177,42 +180,42 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={status === "loading"}
-                className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors disabled:opacity-50"
-                placeholder="such a darling🙈"
+                className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all disabled:opacity-50 placeholder:text-muted/50 shadow-inner"
+                placeholder="e.g. daniel, sam, anonymous"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1">
-                Message <span className="opacity-50">(Optional)</span>
+              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1.5 font-semibold">
+                Telemetry Message <span className="opacity-50 text-[9px]">(Optional)</span>
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={status === "loading"}
-                className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors h-20 resize-none disabled:opacity-50"
-                placeholder="izrah you good? check in when you can..."
+                className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all h-20 resize-none disabled:opacity-50 placeholder:text-muted/50 shadow-inner"
+                placeholder="izrah you alive? check in when you see this..."
               />
             </div>
 
             <button
               type="submit"
               disabled={status === "loading" || !name.trim()}
-              className="w-full bg-text text-void hover:bg-alive hover:text-void font-mono font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+              className="w-full bg-alive text-void hover:bg-alive/90 font-mono font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(200,255,0,0.25)] hover:shadow-[0_0_25px_rgba(200,255,0,0.4)] active:scale-[0.98]"
             >
-              {status === "loading" ? "Sending..." : "Send Ping"}
+              {status === "loading" ? "Broadcasting Ping..." : "Send Live Ping"}
             </button>
           </form>
         ) : (
           /* ── TAB 2: DROP A SONG FORM ── */
-          <form onSubmit={handleRecommendSubmit} className="space-y-3.5">
+          <form onSubmit={handleRecommendSubmit} className="space-y-4">
             <div>
-              <p className="text-xs text-muted font-mono leading-relaxed mb-3">
-                Search any song on Spotify and drop it on his live radar.
+              <p className="text-xs text-muted-light font-mono leading-relaxed mb-3">
+                Search any song on Spotify and drop it on his community stream.
               </p>
 
-              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1">
-                Search Track <span className="text-alive">*</span>
+              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1.5 font-semibold">
+                Spotify Track Search <span className="text-alive">*</span>
               </label>
 
               {!selectedTrack ? (
@@ -221,18 +224,18 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search song or artist name..."
-                    className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors"
+                    placeholder="Search song or artist..."
+                    className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all placeholder:text-muted/50 shadow-inner"
                   />
                   {isSearching && (
-                    <span className="absolute right-3 top-2.5 text-xs text-muted animate-spin">
+                    <span className="absolute right-3.5 top-3 text-xs text-muted animate-spin">
                       ⏳
                     </span>
                   )}
 
                   {/* Autocomplete dropdown results */}
                   {visibleSearchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-2xl max-h-48 overflow-y-auto z-20 divide-y divide-border/40">
+                    <div className="absolute top-full left-0 right-0 mt-1.5 glass-panel rounded-2xl shadow-2xl max-h-52 overflow-y-auto z-30 divide-y divide-white/[0.06] border border-white/15">
                       {visibleSearchResults.map((t) => (
                         <div
                           key={t.id}
@@ -240,15 +243,18 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                             setSelectedTrack(t);
                             setSearchResults([]);
                           }}
-                          className="flex items-center gap-2.5 p-2 hover:bg-alive/10 cursor-pointer transition-colors"
+                          className="flex items-center gap-3 p-2.5 hover:bg-alive/15 cursor-pointer transition-colors"
                         >
                           {t.albumArt && (
-                            <img src={t.albumArt} alt="" className="w-8 h-8 rounded object-cover" />
+                            <img src={t.albumArt} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0 border border-white/10" />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="text-text font-mono text-xs font-bold truncate">{t.name}</p>
-                            <p className="text-muted text-[10px] truncate">{t.artist}</p>
+                            <p className="text-muted text-[11px] truncate">{t.artist}</p>
                           </div>
+                          <span className="text-alive text-xs font-mono font-bold px-2 py-0.5 rounded bg-alive/10 border border-alive/20">
+                            Select
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -256,20 +262,20 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                 </div>
               ) : (
                 /* Selected track chip */
-                <div className="flex items-center justify-between p-2.5 bg-alive/10 border border-alive/30 rounded-xl">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center justify-between p-3 bg-alive/10 border border-alive/40 rounded-2xl shadow-[0_0_15px_rgba(200,255,0,0.1)]">
+                  <div className="flex items-center gap-3 min-w-0">
                     {selectedTrack.albumArt && (
-                      <img src={selectedTrack.albumArt} alt="" className="w-9 h-9 rounded object-cover" />
+                      <img src={selectedTrack.albumArt} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0 border border-white/20" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-alive font-mono text-xs font-bold truncate">{selectedTrack.name}</p>
-                      <p className="text-muted text-[10px] truncate">{selectedTrack.artist}</p>
+                      <p className="text-muted-light text-[11px] truncate">{selectedTrack.artist}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => { setSelectedTrack(null); setSearchQuery(""); }}
-                    className="text-muted hover:text-text text-xs px-1 cursor-pointer"
+                    className="text-muted hover:text-text text-xs p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
                     title="Change track"
                   >
                     ✕
@@ -279,7 +285,7 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
             </div>
 
             <div>
-              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1">
+              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1.5 font-semibold">
                 Your Name <span className="text-alive">*</span>
               </label>
               <input
@@ -288,31 +294,31 @@ function PingModalContent({ onClose, initialTab = "ping", onRecommendationSubmit
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={status === "loading"}
-                className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors disabled:opacity-50"
+                className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all disabled:opacity-50 placeholder:text-muted/50 shadow-inner"
                 placeholder="who's dropping this banger?"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1">
-                Note for Izrah <span className="opacity-50">(Optional)</span>
+              <label className="block text-[10px] text-muted font-mono uppercase tracking-widest mb-1.5 font-semibold">
+                Note for Izrah <span className="opacity-50 text-[9px]">(Optional)</span>
               </label>
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={status === "loading"}
-                className="w-full bg-void border border-border/50 rounded-lg px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-alive/50 transition-colors disabled:opacity-50"
-                placeholder="this track is so you bro..."
+                className="w-full bg-void/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text font-mono focus:outline-none focus:border-alive focus:ring-1 focus:ring-alive/30 transition-all disabled:opacity-50 placeholder:text-muted/50 shadow-inner"
+                placeholder="listen to this beat drop bro..."
               />
             </div>
 
             <button
               type="submit"
               disabled={status === "loading" || !name.trim() || !selectedTrack}
-              className="w-full bg-text text-void hover:bg-alive hover:text-void font-mono font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer mt-1"
+              className="w-full bg-alive text-void hover:bg-alive/90 font-mono font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(200,255,0,0.25)] hover:shadow-[0_0_25px_rgba(200,255,0,0.4)] active:scale-[0.98] mt-2"
             >
-              {status === "loading" ? "Dropping..." : "Drop Recommendation"}
+              {status === "loading" ? "Broadcasting Drop..." : "Drop Recommendation"}
             </button>
           </form>
         )}

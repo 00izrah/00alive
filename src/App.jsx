@@ -369,9 +369,8 @@ export default function App() {
           }
         )
         .subscribe((status) => {
-
           if (status === 'SUBSCRIBED') {
-            console.log('[Realtime] Subscribed to izrah-live channel');
+            console.log('[Realtime Broadcast] Subscribed to izrah-live channel');
           }
         });
     }
@@ -384,10 +383,7 @@ export default function App() {
         supabase.removeChannel(channel);
       }
     };
-
   }, [fetchStatus, trackVisitor, triggerFloatingReaction]);
-
-
 
   // ── Derived values ────────────────────────────────────────────────────────
   const tierColor = statusData?.color || 'alive';
@@ -398,18 +394,38 @@ export default function App() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-dvh bg-void relative overflow-hidden flex flex-col items-center py-10 selection:bg-alive selection:text-void">
+    <div className="min-h-dvh bg-void relative overflow-hidden flex flex-col items-center py-8 sm:py-12 selection:bg-alive selection:text-void">
 
-      {/* Background glow — shifts colour with album art */}
+      {/* Multi-layered Ambient Background Glows */}
       <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full blur-[120px] opacity-25 pointer-events-none transition-colors duration-1000"
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] opacity-20 pointer-events-none transition-colors duration-1000"
+        style={{ backgroundColor: activeEkgColor }}
+      />
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px] opacity-10 pointer-events-none transition-colors duration-1000"
         style={{ backgroundColor: activeEkgColor }}
       />
 
-      <div className="w-full max-w-sm px-5 flex flex-col z-10">
+      <div className="w-full max-w-[440px] px-4 sm:px-5 flex flex-col z-10">
 
-        {/* EKG */}
-        <div className="mb-8 opacity-60">
+        {/* Cybernetic Live Telemetry Header Bar */}
+        <div className="flex items-center justify-between mb-6 pb-3 border-b border-white/[0.06] text-[9px] font-mono text-muted select-none">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-alive opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-alive" />
+            </span>
+            <span className="text-text/90 font-semibold tracking-wider">SYSTEM: MONITORING</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted/60 tracking-widest uppercase">
+            <span>00ALIVE</span>
+            <span>//</span>
+            <span>RADAR</span>
+          </div>
+        </div>
+
+        {/* EKG Oscilloscope HUD */}
+        <div className="mb-7">
           <EKG
             bpm={statusData?.bpm || 80}
             energy={statusData?.energy || 0.5}
@@ -419,12 +435,17 @@ export default function App() {
           />
         </div>
 
-        {/* The question */}
-        <div className="mb-8">
-          <p className="text-muted text-[15px] tracking-[0.3em] font-semibold mb-3">
-            — IS IZRAH STILL ALIVE?
-          </p>
-          <h1 className="font-display text-8xl leading-none text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 tracking-wider">
+        {/* Hero Question & Typographic Centerpiece */}
+        <div className="mb-7 select-none">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-muted-light text-[10px] font-mono tracking-[0.25em] uppercase">
+              STATUS INQUIRY
+            </span>
+            <span className="text-muted text-[11px] font-mono tracking-[0.2em] uppercase">
+              — IS IZRAH STILL ALIVE?
+            </span>
+          </div>
+          <h1 className="font-display text-8xl sm:text-9xl leading-none text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-neutral-500 tracking-wider drop-shadow-[0_0_25px_rgba(255,255,255,0.1)]">
             {loading ? '...' : (
               statusData?.tier === 'CHECK ON HIM' || statusData?.tier === 'UNKNOWN'
                 ? 'UNCLEAR.'
@@ -435,7 +456,7 @@ export default function App() {
 
         {/* Status badge + ping button */}
         {!loading && statusData && (
-          <div className="mb-8 flex items-center justify-between border-b border-border/50 pb-6">
+          <div className="mb-7 flex items-center justify-between border-b border-white/[0.08] pb-5">
             <StatusBadge
               tier={statusData.tier}
               label={statusData.label}
@@ -448,40 +469,45 @@ export default function App() {
                 setModalInitialTab('ping');
                 setIsPingModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-alive/30 bg-alive/5 text-alive text-[10px] font-mono tracking-widest uppercase transition-colors hover:bg-alive/10 hover:border-alive/50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-alive/40 bg-alive/10 text-alive text-[10px] font-mono font-semibold tracking-widest uppercase transition-all hover:bg-alive/20 hover:border-alive/60 hover:shadow-[0_0_15px_rgba(200,255,0,0.2)] active:scale-95 cursor-pointer shadow-sm"
             >
-              <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 5.46436 12 6.42958Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 4.46436 12 6.42958Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Check On Him
+              <span>Check On Him</span>
             </button>
           </div>
         )}
 
-        {/* Witty comment */}
-        <div className="mb-10 min-h-[4rem] relative">
-          <div className="absolute -left-3 top-0 bottom-0 w-[2px] bg-gradient-to-b from-border/50 to-transparent" />
+        {/* Neural Mood Feed / Witty AI Commentary Card */}
+        <div className="mb-8 min-h-[4.5rem]">
           {commentLoading ? (
-            <div className="space-y-2">
-              <div className="h-3 bg-surface rounded w-full animate-pulse" />
-              <div className="h-3 bg-surface rounded w-4/5 animate-pulse" />
+            <div className="glass-panel rounded-2xl p-4 space-y-2.5 animate-pulse">
+              <div className="h-3 bg-surface-elevated rounded w-full" />
+              <div className="h-3 bg-surface-elevated rounded w-4/5" />
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {statusData?.vibe && (
-                <span className="text-alive/80 text-[10px] uppercase font-bold tracking-[0.2em]">
-                  [{statusData.vibe}]
-                </span>
-              )}
-              <p className="text-text/80 text-[13px] font-mono leading-relaxed pl-1">
-                {comment || statusData?.message}
-              </p>
+            <div className="glass-panel rounded-2xl p-4 relative overflow-hidden flex items-start gap-3">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-alive via-alive/40 to-transparent" />
+              <div className="flex flex-col gap-1.5 pl-1 flex-1">
+                {statusData?.vibe && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-alive animate-pulse" />
+                    <span className="text-alive text-[10px] uppercase font-mono font-bold tracking-[0.2em]">
+                      [{statusData.vibe}]
+                    </span>
+                  </div>
+                )}
+                <p className="text-text/90 text-[13px] font-mono leading-relaxed">
+                  "{comment || statusData?.message}"
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Track card */}
-        <div className="mb-10">
+        {/* Hero Track Player Card */}
+        <div className="mb-7">
           <TrackCard
             track={statusData?.track}
             isLoading={loading}
@@ -489,9 +515,9 @@ export default function App() {
           />
         </div>
 
-        {/* ─── COMPANION & REACTIONS ─────────────────────────────── */}
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1 min-w-0">
+        {/* ─── COMPANION & REACTIONS DOCK ───────────────────────── */}
+        <div className="grid grid-cols-2 gap-3.5 mb-4">
+          <div className="min-w-0">
             <GroovePet
               bpm={statusData?.bpm || 80}
               isPlaying={Boolean(statusData?.track?.isPlaying)}
@@ -499,7 +525,7 @@ export default function App() {
               ekgColor={activeEkgColor}
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0">
             <SoundBiteReactions
               onReaction={triggerFloatingReaction}
               isLoading={loading}
@@ -507,8 +533,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* ─── COMMUNITY DROPS (Dedicated Full Row) ─────────────────── */}
-        <div className="mb-10">
+        {/* ─── COMMUNITY DROPS (Full Width Carousel) ─────────────── */}
+        <div className="mb-8">
           <DropASong
             onOpenRecommendModal={() => {
               setModalInitialTab('recommend');
@@ -519,15 +545,17 @@ export default function App() {
           />
         </div>
 
-        {/* ─── DEEP DIVE ─────────────────────────────────────────────── */}
-        <div className="mb-6 pt-2 border-t border-border/30">
-          <p className="text-muted text-[10px] font-mono uppercase tracking-widest mt-4">
-            — Deep Dive
+        {/* ─── DEEP DIVE SECTION ─────────────────────────────────── */}
+        <div className="mb-5 pt-3 border-t border-white/[0.08] flex items-center justify-between">
+          <p className="text-muted text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5">
+            <span>📊</span>
+            <span>Analytics & Archives</span>
           </p>
+          <span className="text-[9px] font-mono text-muted/50">4-WEEK AGGREGATE</span>
         </div>
 
         {/* Artist loyalty */}
-        <div className="mb-8">
+        <div className="mb-6">
           <ArtistLoyalty
             topArtists={statusData?.loyalty}
             isLoading={loading}
@@ -543,18 +571,21 @@ export default function App() {
         </div>
 
         {/* Footer — visitor count + raw API link */}
-
-        <div className="mt-4 pt-6 border-t border-border/30 flex items-center justify-between">
-          <p className="text-muted text-[10px] font-mono">
-            {visitorCount !== '...' ? `${visitorCount} visits today` : 'reading signals...'}
-          </p>
+        <div className="mt-4 pt-6 border-t border-white/[0.08] flex items-center justify-between text-[10px] font-mono select-none">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-alive/80 shadow-[0_0_6px_#c8ff00]" />
+            <p className="text-muted-light">
+              {visitorCount !== '...' ? `${visitorCount} visits today` : 'reading signals...'}
+            </p>
+          </div>
           <a
             href="/api/status"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted text-[10px] font-mono hover:text-text transition-colors"
+            className="text-muted hover:text-alive transition-colors flex items-center gap-1 group"
           >
-            /api/status →
+            <span>/api/status</span>
+            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
           </a>
         </div>
 

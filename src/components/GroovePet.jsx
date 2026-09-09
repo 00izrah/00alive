@@ -41,48 +41,58 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
   return (
     <div
       onClick={handleClick}
-      className="border border-border rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden bg-surface/20 backdrop-blur-sm group cursor-pointer hover:border-alive/40 transition-all select-none"
+      className="glass-panel-interactive rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden group cursor-pointer select-none transition-all duration-300 hover:border-alive/40"
     >
+      {/* Subtle ambient light from the stage */}
+      {isPlaying && (
+        <div
+          className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-32 h-20 rounded-full blur-2xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: ekgColor }}
+        />
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-1 relative z-10">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px]">{isPlaying ? "🎧" : "💤"}</span>
-          <p className="text-muted text-xs tracking-widest font-mono uppercase">
-            —gbedu
+          <span className="text-xs">{isPlaying ? "🎧" : "💤"}</span>
+          <p className="text-muted text-[11px] tracking-widest font-mono uppercase font-semibold">
+            — gbedu
           </p>
         </div>
         <span
-          className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full border transition-colors"
+          className="text-[9px] font-mono uppercase px-2.5 py-0.5 rounded-full border transition-colors shadow-sm"
           style={{
-            borderColor: isPlaying ? `${ekgColor}40` : 'rgba(255,255,255,0.1)',
-            backgroundColor: isPlaying ? `${ekgColor}15` : 'transparent',
+            borderColor: isPlaying ? `${ekgColor}50` : 'rgba(255,255,255,0.1)',
+            backgroundColor: isPlaying ? `${ekgColor}15` : 'rgba(255,255,255,0.03)',
             color: isPlaying ? ekgColor : '#888',
           }}
         >
-          {isPlaying ? `${currentBpm} BPM` : 'shhh'}
+          {isPlaying ? `${currentBpm} BPM` : 'resting'}
         </span>
       </div>
 
       {/* Floating Speech Bubble */}
       {bubbleText && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-30 bg-void border border-alive/40 text-alive text-[10px] font-mono font-bold px-2.5 py-1 rounded-full shadow-[0_0_12px_rgba(200,255,0,0.2)] animate-in fade-in zoom-in duration-150 whitespace-nowrap">
+        <div className="absolute top-9 left-1/2 -translate-x-1/2 z-30 bg-surface-elevated/95 border border-alive/50 text-alive text-[10px] font-mono font-bold px-3 py-1 rounded-full shadow-[0_0_15px_rgba(200,255,0,0.3)] animate-in fade-in zoom-in duration-150 whitespace-nowrap backdrop-blur-md">
           {bubbleText}
         </div>
       )}
 
       {/* Center Stage: The Dancing Stickman */}
       <div className="relative flex items-center justify-center py-2 h-24">
-        {/* Glow halo underneath when playing */}
-        {isPlaying && (
-          <div
-            className="absolute w-16 h-4 rounded-full blur-md opacity-30 bottom-1"
-            style={{ backgroundColor: ekgColor }}
-          />
-        )}
+        {/* DJ stage ring platform */}
+        <div className="absolute bottom-2 w-20 h-4 rounded-[100%] border border-white/[0.08] bg-white/[0.02] shadow-[inset_0_1px_3px_rgba(255,255,255,0.05)] pointer-events-none flex items-center justify-center">
+          {isPlaying && (
+            <div
+              className="w-12 h-2 rounded-[100%] blur-sm opacity-60 animate-pulse"
+              style={{ backgroundColor: ekgColor }}
+            />
+          )}
+        </div>
 
         <svg
           viewBox="0 0 100 100"
-          className={`w-20 h-20 overflow-visible transition-transform duration-300 ${
+          className={`w-20 h-20 overflow-visible transition-transform duration-300 relative z-10 ${
             specialMove ? 'rotate-[360deg] scale-110' : ''
           }`}
           style={{
@@ -188,9 +198,13 @@ export function GroovePet({ bpm = 80, isPlaying = false, energy = 0.5, ekgColor 
       </div>
 
       {/* Footer / Interaction prompt */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/30 text-[9px] font-mono text-muted">
-        <span>{isPlaying ? "click to hype him up" : "click to poke"}</span>
-        <span className="text-alive/70">{clickCount > 0 ? `pokes: ${clickCount}` : "tap me →"}</span>
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[9px] font-mono text-muted relative z-10">
+        <span className="group-hover:text-text/80 transition-colors">
+          {isPlaying ? "click to hype" : "click to wake"}
+        </span>
+        <span className="px-1.5 py-0.5 rounded bg-white/[0.04] text-alive border border-alive/20">
+          {clickCount > 0 ? `⚡ ${clickCount}` : "tap →"}
+        </span>
       </div>
 
       {/* Inline styles for custom bouncing keyframes */}
